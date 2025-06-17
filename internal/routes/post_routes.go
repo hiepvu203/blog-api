@@ -32,6 +32,6 @@ func SetupPostRoutes(r *gin.Engine, db *gorm.DB) {
     publicGroup := r.Group("/posts")
     {
         publicGroup.GET("", controller.GetAllPosts)
-        publicGroup.GET("/:id", controller.GetPostDetail)
+        publicGroup.GET("/:post_id", controller.GetPostDetail)
     }
 }

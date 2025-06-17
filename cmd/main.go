@@ -18,6 +18,7 @@ func main(){
 	routes.SetupUserRoutes(r, config.DB)
 	routes.SetupCategoryRoutes(r, config.DB)
 	routes.SetupPostRoutes(r, config.DB)
+	routes.SetupCommentRoutes(r, config.DB)
 
 	r.Run(":" + os.Getenv("PORT"))
 }

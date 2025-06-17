@@ -87,7 +87,7 @@ func (c *PostController) GetAllPosts(ctx *gin.Context) {
 }
 
 func (c *PostController) GetPostDetail(ctx *gin.Context) {
-    idParam := ctx.Param("id")
+    idParam := ctx.Param("post_id")
     id, err := strconv.ParseUint(idParam, 10, 64)
     if err != nil {
         ctx.JSON(http.StatusBadRequest, utils.ErrorResponse("Invalid post id"))

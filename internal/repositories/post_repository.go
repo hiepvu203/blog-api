@@ -31,7 +31,7 @@ func (r *PostRepository) Delete(id uint) error {
 
 func (r *PostRepository) ListAll() ([]entities.Post, error) {
     var posts []entities.Post
-    err := r.db.Preload("Author").Preload("Category").Find(&posts).Error
+    err := r.db.Preload("Author").Preload("Category").Preload("Comments").Find(&posts).Error
     return posts, err
 }
 
