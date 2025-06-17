@@ -3,6 +3,7 @@ package repositories
 import (
 	"blog-api/internal/entities"
 	"errors"
+	"fmt"
 
 	"gorm.io/gorm"
 )
@@ -18,10 +19,16 @@ func NewUserRepository(db *gorm.DB) *UserRepository {
 func (r *UserRepository) FindEmail(email string) (*entities.User, error) {
 	var user entities.User
 	err := r.db.Where("email = ?", email).First(&user).Error
+	// Thêm log debug
+    fmt.Printf("=== DEBUG ===\nEmail: %s\nError: %v\nUser: %+v\n", email, err, user)
 	if errors.Is(err, gorm.ErrRecordNotFound) {
         return nil, nil // Trả về nil, nil nếu không tìm thấy
     }
 	return &user, err
+}
+
+func (r *UserRepository) Create(user *entities.User) error {
+	return r.db.Create(user).Error
 }
 
 func (r *UserRepository) FindByID(id uint) (*entities.User, error) {
@@ -31,10 +38,6 @@ func (r *UserRepository) FindByID(id uint) (*entities.User, error) {
 		return nil, errors.New("user not found")
 	}
 	return &user, err
-}
-
-func (r *UserRepository) Create(user *entities.User) error {
-	return r.db.Create(user).Error
 }
 
 func (r *UserRepository) ListAll() ([]entities.User, error) {
@@ -57,5 +60,6 @@ func (r *UserRepository) Update(user  *entities.User) error {
         "username":  user.Username,
         "email":     user.Email,
         "password":  user.Password, // hashed from services
+		"role":      user.Role,
     }).Error
 }

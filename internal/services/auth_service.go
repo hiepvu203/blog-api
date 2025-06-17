@@ -1,11 +1,12 @@
 package services
 
 import (
-	"fmt"
 	"blog-api/internal/entities"
 	"blog-api/internal/repositories"
 	"blog-api/pkg/utils"
 	"errors"
+
+	"gorm.io/gorm"
 )
 
 type AuthService struct {
@@ -16,25 +17,50 @@ func NewAuthService(userRepo *repositories.UserRepository) *AuthService {
 	return &AuthService{userRepo: userRepo}
 }
 
-func (s *AuthService) Register(user *entities.User) error {
-	fmt.Printf("Checking email: %s\n", user.Email)
-	existingUser, err := s.userRepo.FindEmail(user.Email)
-	fmt.Printf("Result: %+v, Error: %v\n", existingUser, err)
+func (s *AuthService) Register(email, password, username string) (*entities.User, error) {
+	if existing, err := s.userRepo.FindEmail(email); err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, err
+	} else if existing != nil {
+		return nil, errors.New("email already exists")
+	}
+	
+	// if _, err := s.userRepo.FindEmail(email); err == nil {
+	// 	return nil, errors.New("email already exists")
+	// }
 
+	hashedPassword, err := utils.HashPassword(password)
 	if err != nil {
-        return fmt.Errorf("database error: %v", err)
-    }
-
-	if existingUser != nil {
-		return errors.New("email already exists")
+		return nil, err
 	}
 
-	hashPassword, err := utils.HashPassword(user.Password)
-	if err != nil {
-		return err
+	user := &entities.User{
+		Email:    email,
+		Password: hashedPassword,
+		Username: username,
+		Role:     "client", // default role
 	}
 
-	user.Password = hashPassword
+	if err := s.userRepo.Create(user); err != nil {
+		return nil, err
+	}
 
-	return s.userRepo.Create(user)
+	return user, nil
+}
+
+func (s *AuthService) Login(email, password string) (*entities.User, string, error) {
+	user, err := s.userRepo.FindEmail(email)
+	if err != nil {
+		return nil, "", errors.New("invalid credentials")
+	}
+
+	if !utils.CheckPasswordHash(password, user.Password) {
+		return nil, "", errors.New("invalid credentials")
+	}
+
+	token, err := utils.GenerateToken(uint(user.ID), user.Role)
+	if err != nil {
+		return nil, "", err
+	}
+
+	return user, token, nil
 }

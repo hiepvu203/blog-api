@@ -1,9 +1,9 @@
 package services
 
 import (
-	"blog-api/internal/dto"
 	"blog-api/internal/entities"
 	"blog-api/internal/repositories"
+	"blog-api/pkg/utils"
 	"errors"
 )
 
@@ -27,35 +27,30 @@ func (s *UserService) GetAllUsers() ([]entities.User, error){
 	return s.userRepo.ListAll()
 }
 
-func (s *UserService) UpdateUser(currentUserID uint, targetUserID uint, updates dto.UserUpdateRequest) error {
-	// get the user to update
-	targetUser, err := s.userRepo.FindByID(targetUserID)
-
-	if err != nil{
-		return err
-	}
-
-	// Kiểm tra quyền:
-    // - Admin: được sửa mọi thứ
-    // - Client: chỉ được sửa chính mình và không được thay đổi role
-
-	currentUser, err := s.userRepo.FindByID(currentUserID)
-	if err != nil{
-		return err
-	}
-
-	if currentUser.Role != "admin" && currentUser.ID != targetUser.ID {
-		return errors.New("permission denied: you can only update your own profile")
-	}
-
-	if updates.Username != "" {
-        targetUser.Username = updates.Username
+func (s *UserService) ChangePassword(userID uint, oldPassword, newPassword string) error {
+    user, err := s.userRepo.FindByID(userID)
+    if err != nil {
+        return err
     }
-    
-	// Chỉ admin được đổi role
-    if currentUser.Role == "admin" && updates.Role != "" {
-        targetUser.Role = updates.Role
+    if !utils.CheckPasswordHash(oldPassword, user.Password) {
+        return errors.New("old password is incorrect")
     }
+    hashed, err := utils.HashPassword(newPassword)
+    if err != nil {
+        return err
+    }
+    user.Password = hashed
+    return s.userRepo.Update(user)
+}
 
-    return s.userRepo.Update(targetUser)
+func (s *UserService) ChangeUserRole(userID uint, newRole string) error {
+    user, err := s.userRepo.FindByID(userID)
+    if err != nil {
+        return err
+    }
+    if newRole != "admin" && newRole != "client" {
+        return errors.New("invalid role")
+    }
+    user.Role = newRole
+    return s.userRepo.Update(user)
 }

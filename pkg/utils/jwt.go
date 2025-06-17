@@ -9,7 +9,7 @@ import (
 var JWT_SECRET = []byte(os.Getenv("JWT_SECRET"))
 
 func GenerateToken(userID uint, role string) (string, error){
-	token := jwt.NewWithClaims(jwt.SigningMethodES256, jwt.MapClaims{
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"user_id" : userID,
 		"role": role,
 		"exp": time.Now().Add(time.Hour * 72).Unix(),
