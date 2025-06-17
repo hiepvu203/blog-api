@@ -31,6 +31,6 @@ func (r *CategoryRepository) Delete(id uint) error {
 
 func (r *CategoryRepository) ListAll() ([]entities.Category, error) {
     var categories []entities.Category
-    err := r.db.Find(&categories).Error
+    err := r.db.Preload("Posts").Find(&categories).Error
     return categories, err
 }
