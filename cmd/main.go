@@ -16,6 +16,7 @@ func main(){
 	r := gin.Default()
 	// routes.SetupRoutes(r)
 	routes.SetupUserRoutes(r, config.DB)
+	routes.SetupCategoryRoutes(r, config.DB)
 
 	r.Run(":" + os.Getenv("PORT"))
 }
