@@ -14,7 +14,7 @@ func OwnerOrAdminMiddleware(db *gorm.DB) gin.HandlerFunc{
 	return func(ctx *gin.Context) {
         userID, ok := ctx.Get("userID")
         if !ok {
-            ctx.AbortWithStatusJSON(http.StatusUnauthorized, utils.ErrorResponse("Unauthorized"))
+            ctx.AbortWithStatusJSON(http.StatusUnauthorized, utils.ErrorResponse(utils.ErrUnauthorized))
             return
         }
         role, _ := ctx.Get("role")
@@ -25,7 +25,7 @@ func OwnerOrAdminMiddleware(db *gorm.DB) gin.HandlerFunc{
 
         uidFloat, ok := userID.(float64)
         if !ok {
-            ctx.AbortWithStatusJSON(http.StatusInternalServerError, utils.ErrorResponse("Invalid userID type"))
+            ctx.AbortWithStatusJSON(http.StatusInternalServerError, utils.ErrorResponse(utils.ErrInvalidUserIDType))
             return
         }
         uid := uint(uidFloat)
@@ -33,18 +33,18 @@ func OwnerOrAdminMiddleware(db *gorm.DB) gin.HandlerFunc{
         postIDParam := ctx.Param("id")
         postID, err := strconv.ParseUint(postIDParam, 10, 64)
         if err != nil {
-            ctx.AbortWithStatusJSON(http.StatusBadRequest, utils.ErrorResponse("Invalid post id"))
+            ctx.AbortWithStatusJSON(http.StatusBadRequest, utils.ErrorResponse(utils.ErrInvalidPostID))
             return
         }
 
         var post entities.Post
         if err := db.First(&post, postID).Error; err != nil {
-            ctx.AbortWithStatusJSON(http.StatusNotFound, utils.ErrorResponse("Post not found"))
+            ctx.AbortWithStatusJSON(http.StatusNotFound, utils.ErrorResponse(utils.ErrPostNotFound))
             return
         }
 
         if post.AuthorID != uid {
-            ctx.AbortWithStatusJSON(http.StatusForbidden, utils.ErrorResponse("You do not have permission to edit or delete this post."))
+            ctx.AbortWithStatusJSON(http.StatusForbidden, utils.ErrorResponse(utils.ErrNoPermissionPost))
             return
         }
         ctx.Next()

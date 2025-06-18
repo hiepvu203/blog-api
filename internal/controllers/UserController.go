@@ -82,19 +82,19 @@ func (c *UserController) Login(ctx *gin.Context) {
 func (c *UserController) GetMe(context *gin.Context){
 	userID, ok := context.Get("userID")
     if !ok {
-        context.JSON(http.StatusUnauthorized, utils.ErrorResponse("Unauthorized"))
+        context.JSON(http.StatusUnauthorized, utils.ErrorResponse(utils.ErrUnauthorized))
         return
     }
 
     uid, ok := userID.(float64)
     if !ok {
-        context.JSON(http.StatusInternalServerError, utils.ErrorResponse("Invalid userID type"))
+        context.JSON(http.StatusInternalServerError, utils.ErrorResponse(utils.ErrInvalidUserIDType))
         return
     }
 
     user, err := c.UserService.GetUserByID(uint(uid))
     if err != nil {
-        context.JSON(http.StatusNotFound, utils.ErrorResponse("User not found"))
+        context.JSON(http.StatusNotFound, utils.ErrorResponse(utils.ErrUserNotFound))
         return
     }
 
@@ -109,7 +109,7 @@ func (c *UserController) GetMe(context *gin.Context){
 func (c *UserController) ChangePassword(context *gin.Context) {
 	userID, ok := context.Get("userID")
     if !ok {
-        context.JSON(http.StatusUnauthorized, utils.ErrorResponse("Unauthorized"))
+        context.JSON(http.StatusUnauthorized, utils.ErrorResponse(utils.ErrUnauthorized))
         return
     }
 
@@ -121,21 +121,21 @@ func (c *UserController) ChangePassword(context *gin.Context) {
 
     uid, ok := userID.(float64)
     if !ok {
-        context.JSON(http.StatusInternalServerError, utils.ErrorResponse("Invalid userID type"))
+        context.JSON(http.StatusInternalServerError, utils.ErrorResponse(utils.ErrInvalidUserIDType))
         return
     }
 
     err := c.UserService.ChangePassword(uint(uid), req.OldPassword, req.NewPassword)
     if err != nil {
         if err.Error() == "old password is incorrect" {
-            context.JSON(http.StatusBadRequest, utils.ErrorResponse("Old password is incorrect."))
+            context.JSON(http.StatusBadRequest, utils.ErrorResponse(utils.ErrOldPasswordIncorrect))
             return
         }
         context.JSON(http.StatusBadRequest, utils.ErrorResponse(err.Error()))
         return
     }
 
-    context.JSON(http.StatusOK, utils.SuccessResponse(gin.H{"message": "Password changed successfully"}))
+    context.JSON(http.StatusOK, utils.SuccessResponse(gin.H{"message": utils.MsgPasswordChanged}))
 }
 
 func (c *UserController) ListUsers(ctx *gin.Context) {
@@ -145,7 +145,7 @@ func (c *UserController) ListUsers(ctx *gin.Context) {
         if v, err := strconv.Atoi(p); err == nil && v > 0 {
             page = v
         } else {
-            ctx.JSON(http.StatusBadRequest, utils.ErrorResponse("Invalid page parameter"))
+            ctx.JSON(http.StatusBadRequest, utils.ErrorResponse(utils.ErrInvalidPageParam))
             return
         }
     }
@@ -153,14 +153,14 @@ func (c *UserController) ListUsers(ctx *gin.Context) {
         if v, err := strconv.Atoi(ps); err == nil && v > 0 {
             pageSize = v
         } else {
-            ctx.JSON(http.StatusBadRequest, utils.ErrorResponse("Invalid page_size parameter"))
+            ctx.JSON(http.StatusBadRequest, utils.ErrorResponse(utils.ErrInvalidPageSizeParam))
             return
         }
     }
 
     users, total, err := c.UserService.GetAllUsers(page, pageSize)
     if err != nil {
-        ctx.JSON(http.StatusInternalServerError, utils.ErrorResponse("Could not fetch users"))
+        ctx.JSON(http.StatusInternalServerError, utils.ErrorResponse(utils.ErrCouldNotFetchUsers))
         return
     }
     if total == 0 {
@@ -169,7 +169,7 @@ func (c *UserController) ListUsers(ctx *gin.Context) {
             "total":   0,
             "page":    page,
             "page_size": pageSize,
-            "message": "No users found.",
+            "message": utils.ErrUserNotFound,
         }))
         return
     }
@@ -189,7 +189,7 @@ func (c *UserController) ListUsers(ctx *gin.Context) {
         "total":   total,
         "page":    page,
         "page_size": pageSize,
-        "message": "Users fetched successfully.",
+        "message": utils.UserFetchOK,
     }))
 }
 
@@ -206,7 +206,7 @@ func (c *UserController) ChangeUserRole(ctx *gin.Context) {
     var userID uint
     _, err := fmt.Sscanf(idParam, "%d", &userID)
     if err != nil {
-        ctx.JSON(http.StatusBadRequest, utils.ErrorResponse("Invalid user id"))
+        ctx.JSON(http.StatusBadRequest, utils.ErrorResponse(utils.ErrInvalidUserID))
         return
     }
 
@@ -216,7 +216,7 @@ func (c *UserController) ChangeUserRole(ctx *gin.Context) {
         return
     }
 
-    ctx.JSON(http.StatusOK, utils.SuccessResponse(gin.H{"message": "User role updated"}))
+    ctx.JSON(http.StatusOK, utils.SuccessResponse(gin.H{"message": utils.MsgUserRoleUpdated}))
 }
 
 func (c *UserController) DeleteUser(ctx *gin.Context) {
@@ -224,7 +224,7 @@ func (c *UserController) DeleteUser(ctx *gin.Context) {
     var userID uint
     _, err := fmt.Sscanf(idParam, "%d", &userID)
     if err != nil {
-        ctx.JSON(http.StatusBadRequest, utils.ErrorResponse("Invalid user id"))
+        ctx.JSON(http.StatusBadRequest, utils.ErrorResponse(utils.ErrInvalidUserID))
         return
     }
 
@@ -234,7 +234,7 @@ func (c *UserController) DeleteUser(ctx *gin.Context) {
         return
     }
 
-    ctx.JSON(http.StatusOK, utils.SuccessResponse(gin.H{"message": "User deleted successfully"}))
+    ctx.JSON(http.StatusOK, utils.SuccessResponse(gin.H{"message": utils.MsgUserDeleted}))
 }
 
 func (c *UserController) GetUserDetail(ctx *gin.Context) {
@@ -242,13 +242,13 @@ func (c *UserController) GetUserDetail(ctx *gin.Context) {
     var userID uint
     _, err := fmt.Sscanf(idParam, "%d", &userID)
     if err != nil {
-        ctx.JSON(http.StatusBadRequest, utils.ErrorResponse("Invalid user id"))
+        ctx.JSON(http.StatusBadRequest, utils.ErrorResponse(utils.ErrInvalidUserID))
         return
     }
 
     user, err := c.UserService.GetUserByID(userID)
     if err != nil {
-        ctx.JSON(http.StatusNotFound, utils.ErrorResponse("User not found"))
+        ctx.JSON(http.StatusNotFound, utils.ErrorResponse(utils.ErrUserNotFound))
         return
     }
 

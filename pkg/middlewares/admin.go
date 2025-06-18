@@ -10,7 +10,7 @@ func AdminMiddleware() gin.HandlerFunc{
 		role, exists := ctx.Get("role")
 
 		if !exists || role != "admin"{
-			ctx.AbortWithStatusJSON(403, utils.ErrorResponse("Admin access required"))
+			ctx.AbortWithStatusJSON(403, utils.ErrorResponse(utils.ErrAdminAccessRequired))
 			return
 		}
 		ctx.Next()

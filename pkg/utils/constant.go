@@ -2,6 +2,7 @@ package utils
 
 const (
     ErrUnauthorized           = "Unauthorized"
+	ErrNotToken				  = "Authorization header required"
     ErrInvalidUserIDType      = "Invalid userID type"
     ErrAdminAccessRequired    = "Admin access required"
     ErrInvalidToken           = "Invalid token"
@@ -18,6 +19,7 @@ const (
     ErrUserNotFound           = "User not found"
     ErrOldPasswordIncorrect   = "Old password is incorrect."
     ErrInvalidUserID          = "Invalid user id"
+	ErrInvalidCategoryID	  = "Invalid category id"
     ErrCouldNotFetchPosts     = "Could not fetch posts"
     ErrCouldNotFetchCategories= "Could not fetch categories"
     ErrCategoryNotFound       = "Category not found"
@@ -44,4 +46,10 @@ const (
     MsgCommentCreated         = "Comment created successfully"
     MsgCommentUpdated         = "Comment updated successfully"
     MsgCommentDeleted         = "Comment deleted successfully"
+)
+
+const (
+	SearchSuccess    = "Search success"
+	NotFoundArticles = "No matching articles found"
+	UserFetchOK 	 = "Users fetched successfully"
 )

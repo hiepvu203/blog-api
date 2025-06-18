@@ -12,7 +12,7 @@ func AuthMiddleware() gin.HandlerFunc{
 		// get token from header
 		tokenString := ctx.GetHeader("Authorization")
 		if tokenString == "" {
-			ctx.AbortWithStatusJSON(401, utils.ErrorResponse("Authorization header required"))
+			ctx.AbortWithStatusJSON(401, utils.ErrorResponse(utils.ErrNotToken))
 			return
 		}
 
@@ -23,7 +23,7 @@ func AuthMiddleware() gin.HandlerFunc{
 		
 		token, err := utils.ValidateToken(tokenString)
 		if err != nil {
-			ctx.AbortWithStatusJSON(401, utils.ErrorResponse("Invalid token"))
+			ctx.AbortWithStatusJSON(401, utils.ErrorResponse(utils.ErrInvalidToken))
 			return
 		}
 
@@ -31,7 +31,7 @@ func AuthMiddleware() gin.HandlerFunc{
 			ctx.Set("userID", claims["user_id"])
 			ctx.Set("role", claims["role"])
 		}else {
-			ctx.AbortWithStatusJSON(401, utils.ErrorResponse("Invalid token claims"))
+			ctx.AbortWithStatusJSON(401, utils.ErrorResponse(utils.ErrInvalidTokenClaims))
 			return
 		}
 		ctx.Next()

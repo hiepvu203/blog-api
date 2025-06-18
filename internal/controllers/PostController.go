@@ -26,26 +26,26 @@ func (c *PostController) CreatePost(ctx *gin.Context) {
 	}
 	authorID, ok := ctx.Get("userID")
 	if !ok {
-		ctx.JSON(http.StatusUnauthorized, utils.ErrorResponse("Unauthorized"))
+		ctx.JSON(http.StatusUnauthorized, utils.ErrorResponse(utils.ErrUnauthorized))
 		return
 	}
 	uid, ok := authorID.(float64)
 	if !ok {
-		ctx.JSON(http.StatusInternalServerError, utils.ErrorResponse("Invalid userID type"))
+		ctx.JSON(http.StatusInternalServerError, utils.ErrorResponse(utils.ErrInvalidUserIDType))
 		return
 	}
 	if err := c.service.CreatePost(&req, uint(uid)); err != nil {
 		ctx.JSON(http.StatusInternalServerError, utils.ErrorResponse(err.Error()))
 		return
 	}
-	ctx.JSON(http.StatusCreated, utils.SuccessResponse(gin.H{"message": "Post created successfully"}))
+	ctx.JSON(http.StatusCreated, utils.SuccessResponse(gin.H{"message": utils.MsgPostCreated}))
 }
 
 func (c *PostController) UpdatePost(ctx *gin.Context) {
     idParam := ctx.Param("id")
     id, err := strconv.ParseUint(idParam, 10, 64)
     if err != nil {
-        ctx.JSON(http.StatusBadRequest, utils.ErrorResponse("Invalid post id"))
+        ctx.JSON(http.StatusBadRequest, utils.ErrorResponse(utils.ErrInvalidPostID))
         return
     }
 
@@ -59,22 +59,22 @@ func (c *PostController) UpdatePost(ctx *gin.Context) {
         ctx.JSON(http.StatusInternalServerError, utils.ErrorResponse(err.Error()))
         return
     }
-    ctx.JSON(http.StatusOK, utils.SuccessResponse(gin.H{"message": "Post updated successfully"}))
+    ctx.JSON(http.StatusOK, utils.SuccessResponse(gin.H{"message": utils.MsgPostUpdated}))
 }
 
 func (c *PostController) DeletePost(ctx *gin.Context) {
     idParam := ctx.Param("id")
     id, err := strconv.ParseUint(idParam, 10, 64)
     if err != nil {
-        ctx.JSON(http.StatusBadRequest, utils.ErrorResponse("Invalid post id"))
+        ctx.JSON(http.StatusBadRequest, utils.ErrorResponse(utils.ErrInvalidPostID))
         return
     }
 
     if err := c.service.DeletePost(uint(id)); err != nil {
-        ctx.JSON(http.StatusNotFound, utils.ErrorResponse("Post not found"))
+        ctx.JSON(http.StatusNotFound, utils.ErrorResponse(utils.ErrPostNotFound))
         return
     }
-    ctx.JSON(http.StatusOK, utils.SuccessResponse(gin.H{"message": "Post deleted successfully"}))
+    ctx.JSON(http.StatusOK, utils.SuccessResponse(gin.H{"message": utils.MsgPostDeleted}))
 }
 
 func (c *PostController) GetAllPosts(ctx *gin.Context) {
@@ -98,7 +98,7 @@ func (c *PostController) GetAllPosts(ctx *gin.Context) {
 
 	posts, total, err := c.service.ListPosts(title, content, category, author, page, pageSize)
     if err != nil {
-        ctx.JSON(http.StatusInternalServerError, utils.ErrorResponse("Could not fetch posts"))
+        ctx.JSON(http.StatusInternalServerError, utils.ErrorResponse(utils.ErrCouldNotFetchPosts))
         return
     }
 	var resp []dto.PostResponse
@@ -113,7 +113,7 @@ func (c *PostController) GetAllPosts(ctx *gin.Context) {
             "total":   0,
             "page":    page,
             "page_size": pageSize,
-            "message": "No matching articles found.",
+            "message": utils.NotFoundArticles,
         }))
         return
     }
@@ -124,7 +124,7 @@ func (c *PostController) GetAllPosts(ctx *gin.Context) {
         "total": total,
         "page": page,
         "page_size": pageSize,
-		"message": "Search success.",
+		"message": utils.SearchSuccess,
     }))
 }
 
@@ -132,12 +132,12 @@ func (c *PostController) GetPostDetail(ctx *gin.Context) {
     idParam := ctx.Param("post_id")
     id, err := strconv.ParseUint(idParam, 10, 64)
     if err != nil {
-        ctx.JSON(http.StatusBadRequest, utils.ErrorResponse("Invalid post id"))
+        ctx.JSON(http.StatusBadRequest, utils.ErrorResponse(utils.ErrInvalidPostID))
         return
     }
     post, err := c.service.GetPostByID(uint(id))
     if err != nil {
-        ctx.JSON(http.StatusNotFound, utils.ErrorResponse("Post not found"))
+        ctx.JSON(http.StatusNotFound, utils.ErrorResponse(utils.ErrPostNotFound))
         return
     }
     ctx.JSON(http.StatusOK, utils.SuccessResponse(dto.NewPostResponse(post)))
