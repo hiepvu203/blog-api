@@ -54,10 +54,10 @@ func (s *PostService) DeletePost(id uint) error {
     return s.repo.Delete(id)
 }
 
-func (s *PostService) GetAllPosts() ([]entities.Post, error) {
-    return s.repo.ListAll()
-}
-
 func (s *PostService) GetPostByID(id uint) (*entities.Post, error) {
     return s.repo.FindByID(id)
+}
+
+func (s *PostService) ListPosts(title, content, category, author string, page, pageSize int) ([]entities.Post, int64, error) {
+    return s.repo.ListPosts(title, content, category, author, page, pageSize)
 }

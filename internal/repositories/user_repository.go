@@ -19,12 +19,21 @@ func NewUserRepository(db *gorm.DB) *UserRepository {
 func (r *UserRepository) FindEmail(email string) (*entities.User, error) {
 	var user entities.User
 	err := r.db.Where("email = ?", email).First(&user).Error
-	// Thêm log debug
+	// log debug
     fmt.Printf("=== DEBUG ===\nEmail: %s\nError: %v\nUser: %+v\n", email, err, user)
 	if errors.Is(err, gorm.ErrRecordNotFound) {
         return nil, nil // Trả về nil, nil nếu không tìm thấy
     }
 	return &user, err
+}
+
+func (r *UserRepository) FindByUsername(username string) (*entities.User, error) {
+    var user entities.User
+    err := r.db.Where("username = ?", username).First(&user).Error
+    if errors.Is(err, gorm.ErrRecordNotFound) {
+        return nil, nil
+    }
+    return &user, err
 }
 
 func (r *UserRepository) Create(user *entities.User) error {

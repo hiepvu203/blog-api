@@ -17,6 +17,7 @@ func SetupCategoryRoutes(r *gin.Engine, db *gorm.DB) {
 
 	adminGroup := r.Group("admin/categories").Use(middlewares.AuthMiddleware(), middlewares.AdminMiddleware())
 	{
+		adminGroup.GET("", controller.AdminListCategories)
 		adminGroup.POST("", controller.CreateCategory)
 		adminGroup.PUT("/:id", controller.UpdateCategory)
 		adminGroup.DELETE("/:id", controller.DeleteCategory)

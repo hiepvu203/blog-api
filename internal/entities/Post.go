@@ -11,7 +11,6 @@ type Post struct {
 	CategoryID  uint
 	AuthorID    uint
 	Status      string    `gorm:"type:post_status;default:'draft'"` // ENUM
-	Views       int       `gorm:"default:0"`
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
 

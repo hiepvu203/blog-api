@@ -18,7 +18,6 @@ type CommentResponse struct {
 	Content   string    `json:"content"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
-	// bổ sung thêm trường UserName, Avatar nếu cần hiển thị
 }
 
 type ListCommentResponse struct {

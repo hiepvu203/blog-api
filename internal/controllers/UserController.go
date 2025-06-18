@@ -30,7 +30,7 @@ func (c *UserController) Register(ctx *gin.Context) {
 	}
 
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, utils.ErrorResponse(err.Error()))
+		ctx.JSON(http.StatusBadRequest, utils.ErrorResponse(utils.ParseValidationError(err)))
 		return
 	}
 
@@ -114,7 +114,7 @@ func (c *UserController) ChangePassword(context *gin.Context) {
 
     var req dto.ChangePasswordRequest
     if err := context.ShouldBindJSON(&req); err != nil {
-        context.JSON(http.StatusBadRequest, utils.ErrorResponse(err.Error()))
+        context.JSON(http.StatusBadRequest, utils.ErrorResponse(utils.ParseValidationError(err)))
         return
     }
 
@@ -126,6 +126,10 @@ func (c *UserController) ChangePassword(context *gin.Context) {
 
     err := c.UserService.ChangePassword(uint(uid), req.OldPassword, req.NewPassword)
     if err != nil {
+        if err.Error() == "old password is incorrect" {
+            context.JSON(http.StatusBadRequest, utils.ErrorResponse("Old password is incorrect."))
+            return
+        }
         context.JSON(http.StatusBadRequest, utils.ErrorResponse(err.Error()))
         return
     }

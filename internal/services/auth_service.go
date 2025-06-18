@@ -23,10 +23,12 @@ func (s *AuthService) Register(email, password, username string) (*entities.User
 	} else if existing != nil {
 		return nil, errors.New("email already exists")
 	}
-	
-	// if _, err := s.userRepo.FindEmail(email); err == nil {
-	// 	return nil, errors.New("email already exists")
-	// }
+
+	if existing, err := s.userRepo.FindByUsername(username); err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+        return nil, err
+    } else if existing != nil {
+        return nil, errors.New("username already exists")
+    }
 
 	hashedPassword, err := utils.HashPassword(password)
 	if err != nil {
@@ -49,12 +51,12 @@ func (s *AuthService) Register(email, password, username string) (*entities.User
 
 func (s *AuthService) Login(email, password string) (*entities.User, string, error) {
 	user, err := s.userRepo.FindEmail(email)
-	if err != nil {
-		return nil, "", errors.New("invalid credentials")
+	if err != nil || user == nil {
+		return nil, "", errors.New("email is invalid")
 	}
 
 	if !utils.CheckPasswordHash(password, user.Password) {
-		return nil, "", errors.New("invalid credentials")
+		return nil, "", errors.New("password is invalid")
 	}
 
 	token, err := utils.GenerateToken(uint(user.ID), user.Role)
@@ -64,3 +66,4 @@ func (s *AuthService) Login(email, password string) (*entities.User, string, err
 
 	return user, token, nil
 }
+

@@ -2,6 +2,8 @@ package repositories
 
 import (
 	"blog-api/internal/entities"
+	// "fmt"
+
 	"gorm.io/gorm"
 )
 
@@ -33,4 +35,6 @@ func (r *CategoryRepository) ListAll() ([]entities.Category, error) {
     var categories []entities.Category
     err := r.db.Preload("Posts").Find(&categories).Error
     return categories, err
+
+	// return nil, fmt.Errorf("simulate db error")  // case : test error
 }

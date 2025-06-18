@@ -78,12 +78,54 @@ func (c *PostController) DeletePost(ctx *gin.Context) {
 }
 
 func (c *PostController) GetAllPosts(ctx *gin.Context) {
-    posts, err := c.service.GetAllPosts()
+	title := ctx.Query("title")
+    content := ctx.Query("content")
+    category := ctx.Query("category")
+    author := ctx.Query("author")
+
+	page := 1
+    pageSize := 10
+    if p := ctx.Query("page"); p != "" {
+        if v, err := strconv.Atoi(p); err == nil && v > 0 {
+            page = v
+        }
+    }
+    if ps := ctx.Query("page_size"); ps != "" {
+        if v, err := strconv.Atoi(ps); err == nil && v > 0 {
+            pageSize = v
+        }
+    }
+
+	posts, total, err := c.service.ListPosts(title, content, category, author, page, pageSize)
     if err != nil {
         ctx.JSON(http.StatusInternalServerError, utils.ErrorResponse("Could not fetch posts"))
         return
     }
-    ctx.JSON(http.StatusOK, utils.SuccessResponse(posts))
+	var resp []dto.PostResponse
+    for _, p := range posts {
+        resp = append(resp, dto.NewPostResponse(&p))
+    }
+
+	if total == 0 {
+        ctx.JSON(http.StatusOK, gin.H{
+            "success": true,
+            "data":    resp,
+            "total":   0,
+            "page":    page,
+            "page_size": pageSize,
+            "message": "No matching articles found.",
+        })
+        return
+    }
+
+    ctx.JSON(http.StatusOK, gin.H{
+        "success": true,
+        "data": resp,
+        "total": total,
+        "page": page,
+        "page_size": pageSize,
+		"message": "Search success.",
+    })
 }
 
 func (c *PostController) GetPostDetail(ctx *gin.Context) {
@@ -98,5 +140,5 @@ func (c *PostController) GetPostDetail(ctx *gin.Context) {
         ctx.JSON(http.StatusNotFound, utils.ErrorResponse("Post not found"))
         return
     }
-    ctx.JSON(http.StatusOK, utils.SuccessResponse(post))
+    ctx.JSON(http.StatusOK, utils.SuccessResponse(dto.NewPostResponse(post)))
 }

@@ -74,5 +74,39 @@ func (c *CategoryController) ListCategories(ctx *gin.Context) {
         ctx.JSON(http.StatusInternalServerError, utils.ErrorResponse("Could not fetch categories"))
         return
     }
-    ctx.JSON(http.StatusOK, utils.SuccessResponse(categories))
+    var resp []dto.CategoryResponse
+	for _, cat := range categories {
+		resp = append(resp, dto.CategoryResponse{
+			ID: cat.ID,
+			Name: cat.Name,
+			Slug: cat.Slug,
+		})
+	}
+	ctx.JSON(http.StatusOK, utils.SuccessResponse(resp))
+}
+
+func (c *CategoryController) AdminListCategories(ctx *gin.Context) {
+    categories, err := c.service.GetAllCategories()
+    if err != nil {
+        ctx.JSON(http.StatusInternalServerError, utils.ErrorResponse("Could not fetch categories"))
+        return
+    }
+    var resp []dto.AdminCategoryResponse
+    for _, cat := range categories {
+        var posts []dto.AdminCategoryPost
+        for _, post := range cat.Posts {
+            posts = append(posts, dto.AdminCategoryPost{
+                ID:    post.ID,
+                Title: post.Title,
+            })
+        }
+        resp = append(resp, dto.AdminCategoryResponse{
+            ID:        cat.ID,
+            Name:      cat.Name,
+            Slug:      cat.Slug,
+            PostCount: len(posts),
+            Posts:     posts,
+        })
+    }
+    ctx.JSON(http.StatusOK, utils.SuccessResponse(resp))
 }
