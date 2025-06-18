@@ -31,6 +31,6 @@ func (s *CommentService) DeleteComment(id uint) error {
     return s.repo.Delete(id)
 }
 
-func (s *CommentService) GetCommentsByPostID(postID uint) ([]entities.Comment, error) {
-    return s.repo.ListByPostID(postID)
+func (s *CommentService) GetCommentsByPostID(postID uint, page, pageSize int) ([]entities.Comment, int64, error) {
+    return s.repo.ListByPostID(postID, page, pageSize)
 }

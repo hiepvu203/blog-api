@@ -38,3 +38,9 @@ func (r *CategoryRepository) ListAll() ([]entities.Category, error) {
 
 	// return nil, fmt.Errorf("simulate db error")  // case : test error
 }
+
+func (r *CategoryRepository) Exists(id uint) (bool, error) {
+    var count int64
+    err := r.db.Model(&entities.Category{}).Where("id = ?", id).Count(&count).Error
+    return count > 0, err
+}

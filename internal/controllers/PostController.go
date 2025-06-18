@@ -78,12 +78,12 @@ func (c *PostController) DeletePost(ctx *gin.Context) {
 }
 
 func (c *PostController) GetAllPosts(ctx *gin.Context) {
-	title := ctx.Query("title")
+    title := ctx.Query("title")
     content := ctx.Query("content")
     category := ctx.Query("category")
     author := ctx.Query("author")
 
-	page := 1
+    page := 1
     pageSize := 10
     if p := ctx.Query("page"); p != "" {
         if v, err := strconv.Atoi(p); err == nil && v > 0 {
@@ -96,17 +96,17 @@ func (c *PostController) GetAllPosts(ctx *gin.Context) {
         }
     }
 
-	posts, total, err := c.service.ListPosts(title, content, category, author, page, pageSize)
+    posts, total, err := c.service.ListPosts(title, content, category, author, "published", page, pageSize)
     if err != nil {
         ctx.JSON(http.StatusInternalServerError, utils.ErrorResponse(utils.ErrCouldNotFetchPosts))
         return
     }
-	var resp []dto.PostResponse
+    var resp []dto.PostResponse
     for _, p := range posts {
         resp = append(resp, dto.NewPostResponse(&p))
     }
 
-	if total == 0 {
+    if total == 0 {
         ctx.JSON(http.StatusOK, utils.SuccessResponse(gin.H{
             "success": true,
             "data":    resp,
@@ -124,7 +124,7 @@ func (c *PostController) GetAllPosts(ctx *gin.Context) {
         "total": total,
         "page": page,
         "page_size": pageSize,
-		"message": utils.SearchSuccess,
+        "message": utils.SearchSuccess,
     }))
 }
 

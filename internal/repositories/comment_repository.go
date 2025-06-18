@@ -26,8 +26,23 @@ func (r *CommentRepository) Delete(id uint) error {
     return r.db.Delete(&entities.Comment{}, id).Error
 }
 
-func (r *CommentRepository) ListByPostID(postID uint) ([]entities.Comment, error) {
+func (r *CommentRepository) ListByPostID(postID uint, page, pageSize int) ([]entities.Comment, int64, error) {
     var comments []entities.Comment
-    err := r.db.Where("post_id = ?", postID).Order("created_at asc").Find(&comments).Error
-    return comments, err
+    var total int64
+
+    query := r.db.Model(&entities.Comment{}).Where("post_id = ?", postID)
+    if err := query.Count(&total).Error; err != nil {
+        return nil, 0, err
+    }
+
+    if page < 1 {
+        page = 1
+    }
+    if pageSize < 1 {
+        pageSize = 10
+    }
+    offset := (page - 1) * pageSize
+
+    err := query.Order("created_at asc").Limit(pageSize).Offset(offset).Find(&comments).Error
+    return comments, total, err
 }

@@ -266,3 +266,22 @@ func (c *UserController) GetUserDetail(ctx *gin.Context) {
         "comment_count": commentCount,
     }))
 }
+
+func (c *UserController) DeleteMe(ctx *gin.Context) {
+    userID, ok := ctx.Get("userID")
+    if !ok {
+        ctx.JSON(http.StatusUnauthorized, utils.ErrorResponse(utils.ErrUnauthorized))
+        return
+    }
+    uid, ok := userID.(float64)
+    if !ok {
+        ctx.JSON(http.StatusInternalServerError, utils.ErrorResponse(utils.ErrInvalidUserIDType))
+        return
+    }
+    err := c.UserService.DeleteUser(uint(uid))
+    if err != nil {
+        ctx.JSON(http.StatusNotFound, utils.ErrorResponse(err.Error()))
+        return
+    }
+    ctx.JSON(http.StatusOK, utils.SuccessResponse(gin.H{"message": utils.MsgUserDeleted}))
+}

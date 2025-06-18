@@ -40,7 +40,7 @@ func (r *PostRepository) FindByID(id uint) (*entities.Post, error) {
     return &post, nil
 }
 
-func (r *PostRepository) ListPosts(title, content, category, author string, page, pageSize int) ([]entities.Post, int64, error) {
+func (r *PostRepository) ListPosts(title, content, category, author, status string, page, pageSize int) ([]entities.Post, int64, error) {
     var posts []entities.Post
     var total int64
 
@@ -57,13 +57,14 @@ func (r *PostRepository) ListPosts(title, content, category, author string, page
     if author != "" {
         query = query.Joins("JOIN users ON users.id = posts.author_id").Where("users.username ILIKE ?", "%"+author+"%")
     }
+    if status != "" {
+        query = query.Where("status = ?", status)
+    }
 
-    // count result
     if err := query.Count(&total).Error; err != nil {
         return nil, 0, err
     }
 
-    // page
     if page < 1 {
         page = 1
     }
@@ -74,6 +75,6 @@ func (r *PostRepository) ListPosts(title, content, category, author string, page
 
     err := query.Limit(pageSize).Offset(offset).Order("created_at desc").Find(&posts).Error
     return posts, total, err
-
+	
 	// return nil, 0, fmt.Errorf("simulate db error") // test case error
 }

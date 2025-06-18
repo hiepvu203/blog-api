@@ -6,6 +6,7 @@ import (
 	"blog-api/pkg/utils"
 	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
@@ -99,7 +100,22 @@ func (c *CommentController) GetCommentsByPost(ctx *gin.Context) {
         ctx.JSON(http.StatusBadRequest, utils.ErrorResponse(utils.ErrInvalidPostID))
         return
     }
-    comments, err := c.service.GetCommentsByPostID(postID)
+
+    // Lấy page và page_size từ query
+    page := 1
+    pageSize := 10
+    if p := ctx.Query("page"); p != "" {
+        if v, err := strconv.Atoi(p); err == nil && v > 0 {
+            page = v
+        }
+    }
+    if ps := ctx.Query("page_size"); ps != "" {
+        if v, err := strconv.Atoi(ps); err == nil && v > 0 {
+            pageSize = v
+        }
+    }
+
+    comments, total, err := c.service.GetCommentsByPostID(postID, page, pageSize)
     if err != nil {
         ctx.JSON(http.StatusInternalServerError, utils.ErrorResponse(err.Error()))
         return
@@ -118,5 +134,10 @@ func (c *CommentController) GetCommentsByPost(ctx *gin.Context) {
         })
     }
 
-    ctx.JSON(http.StatusOK, utils.SuccessResponse(resp))
+    ctx.JSON(http.StatusOK, utils.SuccessResponse(gin.H{
+        "comments": resp,
+        "total":    total,
+        "page":     page,
+        "page_size": pageSize,
+    }))
 }
