@@ -1,6 +1,9 @@
 package entities
 
-import "time"
+import (
+	"time"
+	"gorm.io/gorm"
+)
 
 type Comment struct {
 	ID        uint      `gorm:"primaryKey"`
@@ -11,4 +14,6 @@ type Comment struct {
 
 	Post Post
 	User User	
+
+	DeletedAt   gorm.DeletedAt `gorm:"index"`
 }

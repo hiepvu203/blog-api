@@ -5,6 +5,7 @@ import (
 	"blog-api/internal/repositories"
 	"blog-api/internal/services"
 	"blog-api/pkg/middlewares"
+
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
@@ -18,8 +19,8 @@ func SetupPostRoutes(r *gin.Engine, db *gorm.DB) {
     userGroup := r.Group("/posts").Use(middlewares.AuthMiddleware())
     {
         userGroup.POST("", controller.CreatePost)
-        userGroup.PUT("/:id", controller.UpdatePost)
-        userGroup.DELETE("/:id", middlewares.OwnerOrAdminMiddleware(), controller.DeletePost) 
+        userGroup.PUT("/:id", middlewares.OwnerOrAdminMiddleware(db), controller.UpdatePost)
+        userGroup.DELETE("/:id", middlewares.OwnerOrAdminMiddleware(db), controller.DeletePost) 
     }
 
     // Route cho admin (quản lý mọi post)

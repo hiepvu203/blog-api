@@ -1,20 +1,51 @@
 package middlewares
 
 import (
-	"fmt"
+	"blog-api/internal/entities"
+	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 )
 
-func OwnerOrAdminMiddleware() gin.HandlerFunc{
+func OwnerOrAdminMiddleware(db *gorm.DB) gin.HandlerFunc{
 	return func(ctx *gin.Context) {
-		userID := ctx.MustGet("userID").(uint)
-		requestID := ctx.Param("id")
+        userID, ok := ctx.Get("userID")
+        if !ok {
+            ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+            return
+        }
+        role, _ := ctx.Get("role")
+        if role == "admin" {
+            ctx.Next()
+            return
+        }
 
-		if fmt.Sprintf("%d", userID) != requestID && ctx.MustGet("role") != "admin" {
-			ctx.AbortWithStatusJSON(403, gin.H{"error": "You can only edit your own data"})
-			return
-		}
-		ctx.Next()
-	}
+        uidFloat, ok := userID.(float64)
+        if !ok {
+            ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": "Invalid userID type"})
+            return
+        }
+        uid := uint(uidFloat)
+
+        postIDParam := ctx.Param("id")
+        postID, err := strconv.ParseUint(postIDParam, 10, 64)
+        if err != nil {
+            ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "Invalid post id"})
+            return
+        }
+
+        var post entities.Post
+        if err := db.First(&post, postID).Error; err != nil {
+            ctx.AbortWithStatusJSON(http.StatusNotFound, gin.H{"error": "Post not found"})
+            return
+        }
+
+        if post.AuthorID != uid {
+            ctx.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": "You do not have permission to edit or delete this post."})
+            return
+        }
+        ctx.Next()
+    }
 }

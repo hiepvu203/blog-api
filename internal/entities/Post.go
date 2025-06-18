@@ -1,6 +1,9 @@
 package entities
 
-import "time"
+import (
+	"time"
+	"gorm.io/gorm"
+)
 
 type Post struct {
 	ID          uint      `gorm:"primaryKey"`
@@ -18,4 +21,6 @@ type Post struct {
 	Author   User
 	Category Category
 	Comments []Comment `gorm:"foreignKey:PostID"`
+
+	DeletedAt   gorm.DeletedAt `gorm:"index"`
 }

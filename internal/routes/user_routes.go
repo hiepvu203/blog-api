@@ -34,6 +34,7 @@ func SetupUserRoutes(r *gin.Engine, db *gorm.DB) {
 	adminGroup := r.Group("/admin/users").Use(middlewares.AuthMiddleware(), middlewares.AdminMiddleware())
 	{
 		adminGroup.GET("", UserController.ListUsers)
+		adminGroup.GET("/:id", UserController.GetUserDetail)
 		adminGroup.PUT("/:id/role", UserController.ChangeUserRole)
 		adminGroup.DELETE("/:id", UserController.DeleteUser)
 	}

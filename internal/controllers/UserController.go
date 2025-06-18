@@ -6,6 +6,7 @@ import (
 	"blog-api/pkg/utils"
 	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
@@ -138,9 +139,39 @@ func (c *UserController) ChangePassword(context *gin.Context) {
 }
 
 func (c *UserController) ListUsers(ctx *gin.Context) {
-    users, err := c.UserService.GetAllUsers()
+    page := 1
+    pageSize := 10
+    if p := ctx.Query("page"); p != "" {
+        if v, err := strconv.Atoi(p); err == nil && v > 0 {
+            page = v
+        } else {
+            ctx.JSON(http.StatusBadRequest, utils.ErrorResponse("Invalid page parameter"))
+            return
+        }
+    }
+    if ps := ctx.Query("page_size"); ps != "" {
+        if v, err := strconv.Atoi(ps); err == nil && v > 0 {
+            pageSize = v
+        } else {
+            ctx.JSON(http.StatusBadRequest, utils.ErrorResponse("Invalid page_size parameter"))
+            return
+        }
+    }
+
+    users, total, err := c.UserService.GetAllUsers(page, pageSize)
     if err != nil {
         ctx.JSON(http.StatusInternalServerError, utils.ErrorResponse("Could not fetch users"))
+        return
+    }
+    if total == 0 {
+        ctx.JSON(http.StatusOK, gin.H{
+            "success": true,
+            "data":    []dto.UserResponse{},
+            "total":   0,
+            "page":    page,
+            "page_size": pageSize,
+            "message": "No users found.",
+        })
         return
     }
 
@@ -154,7 +185,14 @@ func (c *UserController) ListUsers(ctx *gin.Context) {
         })
     }
 
-    ctx.JSON(http.StatusOK, utils.SuccessResponse(resp))
+    ctx.JSON(http.StatusOK, gin.H{
+        "success": true,
+        "data":    resp,
+        "total":   total,
+        "page":    page,
+        "page_size": pageSize,
+        "message": "Users fetched successfully.",
+    })
 }
 
 func (c *UserController) ChangeUserRole(ctx *gin.Context) {
@@ -199,4 +237,34 @@ func (c *UserController) DeleteUser(ctx *gin.Context) {
     }
 
     ctx.JSON(http.StatusOK, utils.SuccessResponse(gin.H{"message": "User deleted successfully"}))
+}
+
+func (c *UserController) GetUserDetail(ctx *gin.Context) {
+    idParam := ctx.Param("id")
+    var userID uint
+    _, err := fmt.Sscanf(idParam, "%d", &userID)
+    if err != nil {
+        ctx.JSON(http.StatusBadRequest, utils.ErrorResponse("Invalid user id"))
+        return
+    }
+
+    user, err := c.UserService.GetUserByID(userID)
+    if err != nil {
+        ctx.JSON(http.StatusNotFound, utils.ErrorResponse("User not found"))
+        return
+    }
+
+    // Count posts and comments user's
+    postCount := len(user.Posts)
+    commentCount := len(user.Comments)
+
+    ctx.JSON(http.StatusOK, utils.SuccessResponse(gin.H{
+        "id":           user.ID,
+        "username":     user.Username,
+        "email":        user.Email,
+        "role":         user.Role,
+        "created_at":   user.CreatedAt,
+        "post_count":   postCount,
+        "comment_count": commentCount,
+    }))
 }

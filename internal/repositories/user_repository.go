@@ -3,7 +3,6 @@ package repositories
 import (
 	"blog-api/internal/entities"
 	"errors"
-	"fmt"
 
 	"gorm.io/gorm"
 )
@@ -19,10 +18,8 @@ func NewUserRepository(db *gorm.DB) *UserRepository {
 func (r *UserRepository) FindEmail(email string) (*entities.User, error) {
 	var user entities.User
 	err := r.db.Where("email = ?", email).First(&user).Error
-	// log debug
-    fmt.Printf("=== DEBUG ===\nEmail: %s\nError: %v\nUser: %+v\n", email, err, user)
 	if errors.Is(err, gorm.ErrRecordNotFound) {
-        return nil, nil // Trả về nil, nil nếu không tìm thấy
+        return nil, nil
     }
 	return &user, err
 }
@@ -42,17 +39,31 @@ func (r *UserRepository) Create(user *entities.User) error {
 
 func (r *UserRepository) FindByID(id uint) (*entities.User, error) {
 	var user entities.User
-	err := r.db.First(&user, id).Error
-	if errors.Is(err, gorm.ErrRecordNotFound){
-		return nil, errors.New("user not found")
-	}
-	return &user, err
+    err := r.db.Preload("Posts").Preload("Comments").First(&user, id).Error
+    if errors.Is(err, gorm.ErrRecordNotFound){
+        return nil, errors.New("user not found")
+    }
+    return &user, err
 }
 
-func (r *UserRepository) ListAll() ([]entities.User, error) {
+func (r *UserRepository) ListAll(page, pageSize int) ([]entities.User, int64, error) {
 	var users []entities.User
-	err := r.db.Find(&users).Error
-	return users, err
+    var total int64
+
+    if page < 1 {
+        page = 1
+    }
+    if pageSize < 1 {
+        pageSize = 10
+    }
+    offset := (page - 1) * pageSize
+
+    query := r.db.Model(&entities.User{})
+    if err := query.Count(&total).Error; err != nil {
+        return nil, 0, err
+    }
+    err := query.Limit(pageSize).Offset(offset).Order("created_at desc").Find(&users).Error
+    return users, total, err
 }
 
 func (r *UserRepository) Delete(id uint) error {

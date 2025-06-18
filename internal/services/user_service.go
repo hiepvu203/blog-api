@@ -23,8 +23,8 @@ func (s *UserService) DeleteUser(id uint) error {
 	return s.userRepo.Delete(id)
 }
 
-func (s *UserService) GetAllUsers() ([]entities.User, error){
-	return s.userRepo.ListAll()
+func (s *UserService) GetAllUsers(page, pageSize int) ([]entities.User, int64, error){
+	return s.userRepo.ListAll(page, pageSize)
 }
 
 func (s *UserService) ChangePassword(userID uint, oldPassword, newPassword string) error {
