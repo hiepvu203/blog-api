@@ -164,14 +164,13 @@ func (c *UserController) ListUsers(ctx *gin.Context) {
         return
     }
     if total == 0 {
-        ctx.JSON(http.StatusOK, gin.H{
-            "success": true,
+        ctx.JSON(http.StatusOK, utils.SuccessResponse(gin.H{
             "data":    []dto.UserResponse{},
             "total":   0,
             "page":    page,
             "page_size": pageSize,
             "message": "No users found.",
-        })
+        }))
         return
     }
 
@@ -185,14 +184,13 @@ func (c *UserController) ListUsers(ctx *gin.Context) {
         })
     }
 
-    ctx.JSON(http.StatusOK, gin.H{
-        "success": true,
+    ctx.JSON(http.StatusOK, utils.SuccessResponse(gin.H{
         "data":    resp,
         "total":   total,
         "page":    page,
         "page_size": pageSize,
         "message": "Users fetched successfully.",
-    })
+    }))
 }
 
 func (c *UserController) ChangeUserRole(ctx *gin.Context) {

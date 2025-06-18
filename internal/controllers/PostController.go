@@ -107,25 +107,25 @@ func (c *PostController) GetAllPosts(ctx *gin.Context) {
     }
 
 	if total == 0 {
-        ctx.JSON(http.StatusOK, gin.H{
+        ctx.JSON(http.StatusOK, utils.SuccessResponse(gin.H{
             "success": true,
             "data":    resp,
             "total":   0,
             "page":    page,
             "page_size": pageSize,
             "message": "No matching articles found.",
-        })
+        }))
         return
     }
 
-    ctx.JSON(http.StatusOK, gin.H{
+    ctx.JSON(http.StatusOK, utils.SuccessResponse(gin.H{
         "success": true,
         "data": resp,
         "total": total,
         "page": page,
         "page_size": pageSize,
 		"message": "Search success.",
-    })
+    }))
 }
 
 func (c *PostController) GetPostDetail(ctx *gin.Context) {
