@@ -23,7 +23,11 @@ func (r *CommentRepository) Update(id uint, content string) error {
 }
 
 func (r *CommentRepository) Delete(id uint) error {
-    return r.db.Delete(&entities.Comment{}, id).Error
+    result := r.db.Delete(&entities.Comment{}, id)
+    if result.RowsAffected == 0 {
+        return gorm.ErrRecordNotFound
+    }
+    return result.Error
 }
 
 func (r *CommentRepository) ListByPostID(postID uint, page, pageSize int) ([]entities.Comment, int64, error) {

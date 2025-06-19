@@ -8,6 +8,7 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 )
 
 type CategoryController struct {
@@ -46,9 +47,13 @@ func (c *CategoryController) UpdateCategory(ctx *gin.Context) {
     }
 
     if err := c.service.UpdateCategory(uint(id), &req); err != nil {
-        ctx.JSON(http.StatusInternalServerError, utils.ErrorResponse(err.Error()))
-        return
-    }
+		if err == gorm.ErrRecordNotFound {
+			ctx.JSON(http.StatusNotFound, utils.ErrorResponse(utils.ErrCategoryNotFound))
+			return
+		}
+		ctx.JSON(http.StatusInternalServerError, utils.ErrorResponse(err.Error()))
+		return
+	}
     ctx.JSON(http.StatusOK, utils.SuccessResponse(gin.H{"message": utils.MsgCategoryUpdated}))
 }
 

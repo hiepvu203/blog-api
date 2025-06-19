@@ -20,15 +20,19 @@ func (r *CategoryRepository) Create(category *entities.Category) error {
 }
 
 func (r *CategoryRepository) Update(id uint, updated *entities.Category) error {
-    return r.db.Model(&entities.Category{}).Where("id = ?", id).Updates(updated).Error
+    result := r.db.Model(&entities.Category{}).Where("id = ?", id).Updates(updated)
+    if result.RowsAffected == 0 {
+        return gorm.ErrRecordNotFound
+    }
+    return result.Error
 }
 
 func (r *CategoryRepository) Delete(id uint) error {
-	result := r.db.Delete((&entities.Category{}), id)
-	if result.RowsAffected == 0 {
-		return gorm.ErrRecordNotFound
-	}
-	return result.Error
+    result := r.db.Delete((&entities.Category{}), id)
+    if result.RowsAffected == 0 {
+        return gorm.ErrRecordNotFound
+    }
+    return result.Error
 }
 
 func (r *CategoryRepository) ListAll() ([]entities.Category, error) {
