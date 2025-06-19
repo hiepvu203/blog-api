@@ -64,7 +64,7 @@ A RESTful API for a blogging platform built with Golang and Gin. This project pr
 
 1. **Clone the repository:**
     ```sh
-    git clone https://github.com/yourusername/blog-api.git
+    git clone https://github.com/hiepvu203/blog-api.git
     cd blog-api
     ```
 
