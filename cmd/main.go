@@ -16,7 +16,7 @@ func main(){
 	config.InitDB()
 
 	r := gin.Default()
-
+	// r.Use(cors.Default())
 	r.Use(cors.New(cors.Config{
         AllowOrigins:     []string{"http://localhost:4200"},
         AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
