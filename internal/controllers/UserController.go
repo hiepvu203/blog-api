@@ -4,10 +4,7 @@ import (
 	"blog-api/internal/dto"
 	"blog-api/internal/services"
 	"blog-api/pkg/utils"
-	"fmt"
 	"net/http"
-	"strconv"
-
 	"github.com/gin-gonic/gin"
 )
 
@@ -24,14 +21,9 @@ func NewUserController(authService *services.AuthService, userService *services.
 }
 
 func (c *UserController) Register(ctx *gin.Context) {
-	var req struct {
-		Email    string `json:"email" binding:"required,email"`
-		Password string `json:"password" binding:"required,min=6"`
-		Username string `json:"username" binding:"required"`
-	}
-
-	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, utils.ErrorResponse(utils.ParseValidationError(err)))
+	var req dto.UserRegisterRequest
+	if validationErrs := utils.BindAndValidate(ctx, &req); len(validationErrs) > 0 {
+		ctx.JSON(http.StatusBadRequest, gin.H{"success": false, "errors": validationErrs})
 		return
 	}
 
@@ -41,7 +33,7 @@ func (c *UserController) Register(ctx *gin.Context) {
 		if err.Error() == "email already exists" {
 			status = http.StatusConflict
 		}
-		ctx.JSON(status, utils.ErrorResponse(err.Error()))
+		ctx.JSON(status, utils.ErrorResponse("error", err.Error()))
 		return
 	}
 
@@ -53,48 +45,41 @@ func (c *UserController) Register(ctx *gin.Context) {
 }
 
 func (c *UserController) Login(ctx *gin.Context) {
-	var req struct {
-		Email    string `json:"email" binding:"required,email"`
-		Password string `json:"password" binding:"required"`
-	}
-
-	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, utils.ErrorResponse(err.Error()))
+	var req dto.UserLoginRequest
+	if validationErrs := utils.BindAndValidate(ctx, &req); len(validationErrs) > 0 {
+		ctx.JSON(http.StatusBadRequest, gin.H{"success": false, "errors": validationErrs})
 		return
 	}
 
-	user, token, err := c.authService.Login(req.Email, req.Password)
-	if err != nil {
-		ctx.JSON(http.StatusUnauthorized, utils.ErrorResponse(err.Error()))
-		return
+	user, token, errs := c.authService.Login(req.Email, req.Password)
+	if errs != nil && len(errs) > 0  {
+		var fieldErrors []utils.FieldError
+        for _, msg := range errs {
+            fieldErrors = append(fieldErrors, utils.FieldError{Field: "credentials", Message: msg})
+        }
+		ctx.JSON(http.StatusUnauthorized, gin.H{"success": false, "errors": fieldErrors})
+        return
 	}
 
 	ctx.JSON(http.StatusOK, utils.SuccessResponse(gin.H{
-		"token": token,
-		"user": gin.H{
-			"id":    user.ID,
-			"email": user.Email,
-			"role":  user.Role,
-		},
-	}))
+        "token": token,
+        "user": gin.H{
+            "id":    user.ID,
+            "email": user.Email,
+            "role":  user.Role,
+        },
+    }))
 }
 
 func (c *UserController) GetMe(context *gin.Context){
-	userID, ok := context.Get("userID")
-    if !ok {
-        context.JSON(http.StatusUnauthorized, utils.ErrorResponse(utils.ErrUnauthorized))
-        return
-    }
-
-    uid, ok := userID.(float64)
-    if !ok {
-        context.JSON(http.StatusInternalServerError, utils.ErrorResponse(utils.ErrInvalidUserIDType))
-        return
-    }
+	uid, ok := utils.GetUserIDFromContext(context)
+	if !ok {
+		return
+	}
 
     user, err := c.UserService.GetUserByID(uint(uid))
     if err != nil {
-        context.JSON(http.StatusNotFound, utils.ErrorResponse(utils.ErrUserNotFound))
+        context.JSON(http.StatusNotFound, utils.ErrorResponse("user",utils.ErrUserNotFound))
         return
     }
 
@@ -107,31 +92,24 @@ func (c *UserController) GetMe(context *gin.Context){
 }
 
 func (c *UserController) ChangePassword(context *gin.Context) {
-	userID, ok := context.Get("userID")
-    if !ok {
-        context.JSON(http.StatusUnauthorized, utils.ErrorResponse(utils.ErrUnauthorized))
-        return
-    }
+	var req dto.ChangePasswordRequest
+	if validationErrs := utils.BindAndValidate(context, &req); len(validationErrs) > 0 {
+		context.JSON(http.StatusBadRequest, gin.H{"success": false, "errors": validationErrs})
+		return
+	}
 
-    var req dto.ChangePasswordRequest
-    if err := context.ShouldBindJSON(&req); err != nil {
-        context.JSON(http.StatusBadRequest, utils.ErrorResponse(utils.ParseValidationError(err)))
-        return
-    }
-
-    uid, ok := userID.(float64)
-    if !ok {
-        context.JSON(http.StatusInternalServerError, utils.ErrorResponse(utils.ErrInvalidUserIDType))
-        return
-    }
+	uid, ok := utils.GetUserIDFromContext(context)
+	if !ok { 
+		return 
+	}
 
     err := c.UserService.ChangePassword(uint(uid), req.OldPassword, req.NewPassword)
     if err != nil {
         if err.Error() == "old password is incorrect" {
-            context.JSON(http.StatusBadRequest, utils.ErrorResponse(utils.ErrOldPasswordIncorrect))
+            context.JSON(http.StatusBadRequest, utils.ErrorResponse("password",utils.ErrOldPasswordIncorrect))
             return
         }
-        context.JSON(http.StatusBadRequest, utils.ErrorResponse(err.Error()))
+        context.JSON(http.StatusBadRequest, utils.ErrorResponse("error", err.Error()))
         return
     }
 
@@ -139,28 +117,14 @@ func (c *UserController) ChangePassword(context *gin.Context) {
 }
 
 func (c *UserController) ListUsers(ctx *gin.Context) {
-    page := 1
-    pageSize := 10
-    if p := ctx.Query("page"); p != "" {
-        if v, err := strconv.Atoi(p); err == nil && v > 0 {
-            page = v
-        } else {
-            ctx.JSON(http.StatusBadRequest, utils.ErrorResponse(utils.ErrInvalidPageParam))
-            return
-        }
-    }
-    if ps := ctx.Query("page_size"); ps != "" {
-        if v, err := strconv.Atoi(ps); err == nil && v > 0 {
-            pageSize = v
-        } else {
-            ctx.JSON(http.StatusBadRequest, utils.ErrorResponse(utils.ErrInvalidPageSizeParam))
-            return
-        }
-    }
+    page, pageSize, ok := utils.GetPaginationParams(ctx)
+	if !ok {
+		return
+	}
 
     users, total, err := c.UserService.GetAllUsers(page, pageSize)
     if err != nil {
-        ctx.JSON(http.StatusInternalServerError, utils.ErrorResponse(utils.ErrCouldNotFetchUsers))
+        ctx.JSON(http.StatusInternalServerError, utils.ErrorResponse("users",utils.ErrCouldNotFetchUsers))
         return
     }
     if total == 0 {
@@ -194,25 +158,20 @@ func (c *UserController) ListUsers(ctx *gin.Context) {
 }
 
 func (c *UserController) ChangeUserRole(ctx *gin.Context) {
-    var req struct {
-        Role string `json:"role" binding:"required,oneof=admin client"`
-    }
-    if err := ctx.ShouldBindJSON(&req); err != nil {
-        ctx.JSON(http.StatusBadRequest, utils.ErrorResponse(err.Error()))
-        return
-    }
+	var req dto.ChangeUserRole
+	if validationErrs := utils.BindAndValidate(ctx, &req); len(validationErrs) > 0 {
+		ctx.JSON(http.StatusBadRequest, gin.H{"success": false, "errors": validationErrs})
+		return
+	}
 
-    idParam := ctx.Param("id")
-    var userID uint
-    _, err := fmt.Sscanf(idParam, "%d", &userID)
-    if err != nil {
-        ctx.JSON(http.StatusBadRequest, utils.ErrorResponse(utils.ErrInvalidUserID))
-        return
-    }
+	userID, ok := utils.GetUintIDParam(ctx, "id", utils.ErrInvalidUserID)
+	if !ok {
+		return
+	}
 
-    err = c.UserService.ChangeUserRole(userID, req.Role)
+    err := c.UserService.ChangeUserRole(userID, req.Role)
     if err != nil {
-        ctx.JSON(http.StatusBadRequest, utils.ErrorResponse(err.Error()))
+        ctx.JSON(http.StatusBadRequest, utils.ErrorResponse("role",err.Error()))
         return
     }
 
@@ -220,17 +179,14 @@ func (c *UserController) ChangeUserRole(ctx *gin.Context) {
 }
 
 func (c *UserController) DeleteUser(ctx *gin.Context) {
-    idParam := ctx.Param("id")
-    var userID uint
-    _, err := fmt.Sscanf(idParam, "%d", &userID)
-    if err != nil {
-        ctx.JSON(http.StatusBadRequest, utils.ErrorResponse(utils.ErrInvalidUserID))
-        return
-    }
+    userID, ok := utils.GetUintIDParam(ctx, "id", utils.ErrInvalidUserID)
+	if !ok {
+		return
+	}
 
-    err = c.UserService.DeleteUser(userID)
+    err := c.UserService.DeleteUser(userID)
     if err != nil {
-        ctx.JSON(http.StatusNotFound, utils.ErrorResponse(err.Error()))
+        ctx.JSON(http.StatusNotFound, utils.ErrorResponse("user",err.Error()))
         return
     }
 
@@ -238,17 +194,14 @@ func (c *UserController) DeleteUser(ctx *gin.Context) {
 }
 
 func (c *UserController) GetUserDetail(ctx *gin.Context) {
-    idParam := ctx.Param("id")
-    var userID uint
-    _, err := fmt.Sscanf(idParam, "%d", &userID)
-    if err != nil {
-        ctx.JSON(http.StatusBadRequest, utils.ErrorResponse(utils.ErrInvalidUserID))
-        return
-    }
+    userID, ok := utils.GetUintIDParam(ctx, "id", utils.ErrInvalidUserID)
+	if !ok {
+		return
+	}
 
     user, err := c.UserService.GetUserByID(userID)
     if err != nil {
-        ctx.JSON(http.StatusNotFound, utils.ErrorResponse(utils.ErrUserNotFound))
+        ctx.JSON(http.StatusNotFound, utils.ErrorResponse("user",utils.ErrUserNotFound))
         return
     }
 
@@ -268,20 +221,62 @@ func (c *UserController) GetUserDetail(ctx *gin.Context) {
 }
 
 func (c *UserController) DeleteMe(ctx *gin.Context) {
-    userID, ok := ctx.Get("userID")
-    if !ok {
-        ctx.JSON(http.StatusUnauthorized, utils.ErrorResponse(utils.ErrUnauthorized))
-        return
-    }
-    uid, ok := userID.(float64)
-    if !ok {
-        ctx.JSON(http.StatusInternalServerError, utils.ErrorResponse(utils.ErrInvalidUserIDType))
-        return
-    }
+    uid, ok := utils.GetUserIDFromContext(ctx)
+	if !ok {
+		return
+	}
     err := c.UserService.DeleteUser(uint(uid))
     if err != nil {
-        ctx.JSON(http.StatusNotFound, utils.ErrorResponse(err.Error()))
+        ctx.JSON(http.StatusNotFound, utils.ErrorResponse("user",err.Error()))
         return
     }
     ctx.JSON(http.StatusOK, utils.SuccessResponse(gin.H{"message": utils.MsgUserDeleted}))
+}
+
+func (c *UserController) ForgotPassword(ctx *gin.Context) {
+	var req dto.ForgotPasswordRequest
+	if validationErrs := utils.BindAndValidate(ctx, &req); len(validationErrs) > 0 {
+		ctx.JSON(http.StatusBadRequest, gin.H{"success": false, "errors": validationErrs})
+		return
+	}
+
+	err := c.authService.ForgotPassword(req.Email)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, utils.ErrorResponse("email", err.Error()))
+		return
+	}
+}
+
+func (c *UserController) ResetPassword(ctx *gin.Context) {
+	var req dto.ResetPasswordRequest
+	if validationErrs := utils.BindAndValidate(ctx, &req); len(validationErrs) > 0 {
+		ctx.JSON(http.StatusBadRequest, gin.H{"success": false, "errors": validationErrs})
+		return
+	}
+
+	err := c.authService.ResetPassword(req.Token, req.NewPassword)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, utils.ErrorResponse("reset_password", err.Error()))
+		return
+	}
+
+	ctx.JSON(http.StatusOK, utils.SuccessResponse(gin.H{"message": "Password reset successful"}))
+}
+
+func (c *UserController) UpdateCanPost(ctx *gin.Context) {
+    userID, ok := utils.GetUintIDParam(ctx, "id", utils.ErrInvalidUserID)
+    if !ok {
+        return
+    }
+    var req dto.UpdateCanPostRequest
+    if validationErrs := utils.BindAndValidate(ctx, &req); len(validationErrs) > 0 {
+        ctx.JSON(http.StatusBadRequest, gin.H{"success": false, "errors": validationErrs})
+        return
+    }
+    err := c.UserService.UpdateCanPost(userID, req.CanPost)
+    if err != nil {
+        ctx.JSON(http.StatusInternalServerError, utils.ErrorResponse("user", err.Error()))
+        return
+    }
+    ctx.JSON(http.StatusOK, utils.SuccessResponse(gin.H{"message": "Cập nhật quyền đăng bài thành công"}))
 }

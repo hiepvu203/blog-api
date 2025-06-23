@@ -4,26 +4,54 @@ import (
 	"blog-api/internal/dto"
 	"blog-api/internal/entities"
 	"blog-api/internal/repositories"
+	"blog-api/pkg/utils"
 	"errors"
 )
 
 type PostService struct {
 	repo *repositories.PostRepository
 	categoryRepo   *repositories.CategoryRepository
+	userRepo     *repositories.UserRepository
 }
 
-func NewPostService(repo *repositories.PostRepository, categoryRepo *repositories.CategoryRepository) *PostService {
-    return &PostService{repo: repo, categoryRepo: categoryRepo}
+func NewPostService(repo *repositories.PostRepository, categoryRepo *repositories.CategoryRepository, userRepo *repositories.UserRepository) *PostService {
+    return &PostService{repo: repo, categoryRepo: categoryRepo, userRepo: userRepo}
+}
+
+func (s *PostService) ValidatePostCreation(req *dto.CreatePostRequest) ([]utils.FieldError, error) {
+	var errs []utils.FieldError
+
+	existsCate, err := s.categoryRepo.Exists(req.CategoryID)
+	if err != nil {
+		return nil, err // Internal server error
+	}
+	if !existsCate {
+		errs = append(errs, utils.FieldError{Field: "category_id", Message: "category does not exist"})
+	}
+
+	existsSlug, err := s.repo.IsSlugExists(req.Slug)
+	if err != nil {
+		return nil, err // Internal server error
+	}
+	if existsSlug {
+		errs = append(errs, utils.FieldError{Field: "slug", Message: "Slug already exists"})
+	}
+
+	return errs, nil
 }
 
 func (s *PostService) CreatePost(req *dto.CreatePostRequest, authorID uint) error {
-    exists, err := s.categoryRepo.Exists(req.CategoryID)
+    // 1. Lấy thông tin user
+    user, err := s.userRepo.FindByID(authorID)
     if err != nil {
-        return err
+        return errors.New("user not found")
     }
-    if !exists {
-        return errors.New("category does not exist")
+    // 2. Kiểm tra quyền đăng bài
+    if !user.CanPost {
+        return utils.NewAppError("user", "Bạn đã bị chặn quyền đăng bài")
     }
+
+    // 3. Tạo post như cũ nếu user được phép
     post := &entities.Post{
         Title:      req.Title,
         Slug:       req.Slug,
@@ -43,7 +71,7 @@ func (s *PostService) UpdatePost(id uint, req *dto.UpdatePostRequest) error {
             return err
         }
         if !exists {
-            return errors.New("category does not exist")
+            return utils.NewAppError("category_id", "category does not exist")
         }
     }
     updated := &entities.Post{}

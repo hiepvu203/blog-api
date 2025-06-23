@@ -5,6 +5,9 @@ import (
 	"blog-api/internal/repositories"
 	"blog-api/pkg/utils"
 	"errors"
+	"fmt"
+	"regexp"
+	"time"
 
 	"gorm.io/gorm"
 )
@@ -49,21 +52,69 @@ func (s *AuthService) Register(email, password, username string) (*entities.User
 	return user, nil
 }
 
-func (s *AuthService) Login(email, password string) (*entities.User, string, error) {
-	user, err := s.userRepo.FindEmail(email)
-	if err != nil || user == nil {
-		return nil, "", errors.New("email is invalid")
-	}
+func (s *AuthService) Login(email, password string) (*entities.User, string, []string) {
+    var errs []string
+    user, err := s.userRepo.FindEmail(email)
+    if err != nil || user == nil {
+        errs = append(errs, "Email not found")
+        // Không được truy cập user.Password nếu user == nil
+        if password == "" || len(password) < 6 {
+            errs = append(errs, "Password must be at least 6 characters long")
+        }else if !isValidEmail(email) { 
+			errs = append(errs, "Email format is invalid")
+		}
+        return nil, "", errs
+    }
+    if !utils.CheckPasswordHash(password, user.Password) {
+        errs = append(errs, "Password is incorrect")
+    }
+    if len(errs) > 0 {
+        return nil, "", errs
+    }
 
-	if !utils.CheckPasswordHash(password, user.Password) {
-		return nil, "", errors.New("password is invalid")
-	}
-
-	token, err := utils.GenerateToken(uint(user.ID), user.Role)
+    token, err := utils.GenerateToken(uint(user.ID), user.Role)
 	if err != nil {
-		return nil, "", err
+		errs = append(errs, "Failed to generate token")
+		return nil, "", errs
 	}
-
-	return user, token, nil
+    return user, token, nil
 }
 
+func isValidEmail(email string) bool {
+    re := regexp.MustCompile(`^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`)
+    return re.MatchString(email)
+}
+
+func (s *AuthService) ForgotPassword(email string) error {
+	user, err := s.userRepo.FindEmail(email)
+    if err != nil || user == nil {
+        return nil
+    }
+
+    token, err := utils.GenerateResetToken(uint(user.ID), 15*time.Minute)
+    if err != nil {
+        return err
+    }
+
+    resetLink := fmt.Sprintf("https://yourdomain.com/reset-password?token=%s", token)
+    return utils.SendResetEmail(email, resetLink)
+}
+
+func (s *AuthService) ResetPassword(token, newPassword string) error {
+	userID, err := utils.ValidateResetToken(token)
+	if err != nil {
+		return errors.New("invalid or expired token")
+	}
+
+	user, err := s.userRepo.FindByID(userID)
+	if err != nil || user == nil {
+		return errors.New("user not found")
+	}
+
+	hashed, err := utils.HashPassword(newPassword)
+	if err != nil {
+		return err
+	}
+	user.Password = hashed
+	return s.userRepo.Update(user)
+}

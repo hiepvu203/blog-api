@@ -4,7 +4,7 @@ import "time"
 
 type CreateCommentRequest struct {
 	PostID  uint   `json:"post_id" binding:"required"`
-	Content string `json:"content" binding:"required,min=1"`
+	Content string `json:"content" binding:"required"`
 }
 
 type UpdateCommentRequest struct {
@@ -23,4 +23,8 @@ type CommentResponse struct {
 type ListCommentResponse struct {
     Comments []CommentResponse `json:"comments"`
     Total    int               `json:"total"`
+}
+
+type ContentResponse struct {
+	Content string `json:"content" binding:"required"`
 }

@@ -21,6 +21,8 @@ func SetupUserRoutes(r *gin.Engine, db *gorm.DB) {
 	{
 		public.POST("/register", UserController.Register)
 		public.POST("/login", UserController.Login) 
+		// public.POST("/forgot-password", UserController.ForgotPassword)
+        // public.POST("/reset-password", UserController.ResetPassword)
 	}
 
 	// Protected routes (cần auth)
@@ -38,5 +40,6 @@ func SetupUserRoutes(r *gin.Engine, db *gorm.DB) {
 		adminGroup.GET("/:id", UserController.GetUserDetail)
 		adminGroup.PUT("/:id/role", UserController.ChangeUserRole)
 		adminGroup.DELETE("/:id", UserController.DeleteUser)
+		adminGroup.PUT("/:id/ban-post", UserController.UpdateCanPost)
 	}
 }

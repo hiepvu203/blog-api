@@ -18,4 +18,5 @@ type User struct {
 	Comments	[]Comment 	`gorm:"foreignKey:UserID"`
 
 	DeletedAt   gorm.DeletedAt `gorm:"index"`
+	CanPost 	bool 		`gorm:"default:true"` // true: được đăng bài, false: bị chặn đăng bài
 }

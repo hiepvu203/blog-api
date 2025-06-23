@@ -83,3 +83,7 @@ func (r *UserRepository) Update(user  *entities.User) error {
 		"role":      user.Role,
     }).Error
 }
+
+func (r *UserRepository) UpdateCanPost(userID uint, canPost bool) error {
+    return r.db.Model(&entities.User{}).Where("id = ?", userID).Update("can_post", canPost).Error
+}

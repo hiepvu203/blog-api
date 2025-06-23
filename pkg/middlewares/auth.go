@@ -2,6 +2,8 @@ package middlewares
 
 import (
 	"blog-api/pkg/utils"
+	"errors"
+	"log"
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
@@ -12,7 +14,8 @@ func AuthMiddleware() gin.HandlerFunc{
 		// get token from header
 		tokenString := ctx.GetHeader("Authorization")
 		if tokenString == "" {
-			ctx.AbortWithStatusJSON(401, utils.ErrorResponse(utils.ErrNotToken))
+			log.Println("Auth failed: missing token")
+			ctx.AbortWithStatusJSON(401, utils.ErrorResponse("token",utils.ErrNotToken))
 			return
 		}
 
@@ -23,7 +26,13 @@ func AuthMiddleware() gin.HandlerFunc{
 		
 		token, err := utils.ValidateToken(tokenString)
 		if err != nil {
-			ctx.AbortWithStatusJSON(401, utils.ErrorResponse(utils.ErrInvalidToken))
+			if errors.Is(err, jwt.ErrTokenExpired) {
+				log.Println("Auth failed: token expired")
+				ctx.AbortWithStatusJSON(401, utils.ErrorResponse("token","Token expired"))
+				return
+			}
+			log.Println("Auth failed: invalid token:", err)
+			ctx.AbortWithStatusJSON(401, utils.ErrorResponse("token",utils.ErrInvalidToken))
 			return
 		}
 
@@ -31,7 +40,7 @@ func AuthMiddleware() gin.HandlerFunc{
 			ctx.Set("userID", claims["user_id"])
 			ctx.Set("role", claims["role"])
 		}else {
-			ctx.AbortWithStatusJSON(401, utils.ErrorResponse(utils.ErrInvalidTokenClaims))
+			ctx.AbortWithStatusJSON(401, utils.ErrorResponse("token",utils.ErrInvalidTokenClaims))
 			return
 		}
 		ctx.Next()

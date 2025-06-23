@@ -13,7 +13,8 @@ import (
 func SetupPostRoutes(r *gin.Engine, db *gorm.DB) {
     repo := repositories.NewPostRepository(db)
 	categoryRepo := repositories.NewCategoryRepository(db)
-	service := services.NewPostService(repo, categoryRepo)
+	userRepo := repositories.NewUserRepository(db)
+	service := services.NewPostService(repo, categoryRepo, userRepo)
     controller := controllers.NewPostController(service)
 
     // Route cho user (cần đăng nhập)

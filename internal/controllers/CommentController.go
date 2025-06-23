@@ -4,9 +4,7 @@ import (
 	"blog-api/internal/dto"
 	"blog-api/internal/services"
 	"blog-api/pkg/utils"
-	"fmt"
 	"net/http"
-	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
@@ -20,124 +18,94 @@ func NewCommentController(service *services.CommentService) *CommentController {
 }
 
 func (c *CommentController) CreateComment(ctx *gin.Context) {
-    var req struct {
-        Content string `json:"content" binding:"required,min=1"`
-    }
-    if err := ctx.ShouldBindJSON(&req); err != nil {
-        ctx.JSON(http.StatusBadRequest, utils.ErrorResponse(err.Error()))
-        return
-    }
-    userID, ok := ctx.Get("userID")
-    if !ok {
-        ctx.JSON(http.StatusUnauthorized, utils.ErrorResponse(utils.ErrUnauthorized))
-        return
-    }
-    uid, ok := userID.(float64)
-    if !ok {
-        ctx.JSON(http.StatusInternalServerError, utils.ErrorResponse(utils.ErrInvalidUserIDType))
-        return
-    }
-    postIDParam := ctx.Param("post_id")
-    var postID uint
-    _, err := fmt.Sscanf(postIDParam, "%d", &postID)
-    if err != nil {
-        ctx.JSON(http.StatusBadRequest, utils.ErrorResponse(utils.ErrInvalidPostID))
-        return
-    }
-    commentReq := dto.CreateCommentRequest{
-        PostID:  postID,
-        Content: req.Content,
-    }
-    if err := c.service.CreateComment(&commentReq, uint(uid)); err != nil {
-        ctx.JSON(http.StatusInternalServerError, utils.ErrorResponse(err.Error()))
-        return
-    }
-    ctx.JSON(http.StatusCreated, utils.SuccessResponse(gin.H{"message": utils.MsgCommentCreated}))
+	var req dto.CreateCommentRequest
+	if validationErrs := utils.BindAndValidate(ctx, &req); len(validationErrs) > 0 {
+		ctx.JSON(http.StatusBadRequest, gin.H{"success": false, "errors": validationErrs})
+		return
+	}
+
+	uid, ok := utils.GetUserIDFromContext(ctx)
+	if !ok {
+		return
+	}
+
+	postID, ok := utils.GetUintIDParam(ctx, "post_id", utils.ErrInvalidPostID)
+	if !ok {
+		return
+	}
+	req.PostID = postID
+
+	if err := c.service.CreateComment(&req, uint(uid)); err != nil {
+		ctx.JSON(http.StatusInternalServerError, utils.ErrorResponse("comment", err.Error()))
+		return
+	}
+	ctx.JSON(http.StatusCreated, utils.SuccessResponse(gin.H{"message": utils.MsgCommentCreated}))
 }
 
 func (c *CommentController) UpdateComment(ctx *gin.Context) {
-    var req struct {
-        Content string `json:"content" binding:"required,min=1"`
-    }
-    if err := ctx.ShouldBindJSON(&req); err != nil {
-        ctx.JSON(http.StatusBadRequest, utils.ErrorResponse(err.Error()))
-        return
-    }
-    commentIDParam := ctx.Param("comment_id")
-    var commentID uint
-    _, err := fmt.Sscanf(commentIDParam, "%d", &commentID)
-    if err != nil {
-        ctx.JSON(http.StatusBadRequest, utils.ErrorResponse(utils.ErrInvalidCommentID))
-        return
-    }
-    if err := c.service.UpdateComment(commentID, req.Content); err != nil {
-        ctx.JSON(http.StatusInternalServerError, utils.ErrorResponse(err.Error()))
-        return
-    }
-    ctx.JSON(http.StatusOK, utils.SuccessResponse(gin.H{"message": utils.MsgCommentUpdated}))
+	var req dto.UpdateCommentRequest
+	if validationErrs := utils.BindAndValidate(ctx, &req); len(validationErrs) > 0 {
+		ctx.JSON(http.StatusBadRequest, gin.H{"success": false, "errors": validationErrs})
+		return
+	}
+
+	commentID, ok := utils.GetUintIDParam(ctx, "comment_id", utils.ErrInvalidCommentID)
+	if !ok {
+		return
+	}
+
+	if err := c.service.UpdateComment(commentID, req.Content); err != nil {
+		ctx.JSON(http.StatusInternalServerError, utils.ErrorResponse("comment", err.Error()))
+		return
+	}
+	ctx.JSON(http.StatusOK, utils.SuccessResponse(gin.H{"message": utils.MsgCommentUpdated}))
 }
 
 func (c *CommentController) DeleteComment(ctx *gin.Context) {
-    commentIDParam := ctx.Param("comment_id")
-    var commentID uint
-    _, err := fmt.Sscanf(commentIDParam, "%d", &commentID)
-    if err != nil {
-        ctx.JSON(http.StatusBadRequest, utils.ErrorResponse(utils.ErrInvalidCommentID))
-        return
-    }
-    if err := c.service.DeleteComment(commentID); err != nil {
-        ctx.JSON(http.StatusInternalServerError, utils.ErrorResponse(err.Error()))
-        return
-    }
-    ctx.JSON(http.StatusOK, utils.SuccessResponse(gin.H{"message": utils.MsgCommentDeleted}))
+	commentID, ok := utils.GetUintIDParam(ctx, "comment_id", utils.ErrInvalidCommentID)
+	if !ok {
+		return
+	}
+	if err := c.service.DeleteComment(commentID); err != nil {
+		ctx.JSON(http.StatusInternalServerError, utils.ErrorResponse("comment", err.Error()))
+		return
+	}
+	ctx.JSON(http.StatusOK, utils.SuccessResponse(gin.H{"message": utils.MsgCommentDeleted}))
 }
 
 func (c *CommentController) GetCommentsByPost(ctx *gin.Context) {
-    postIDParam := ctx.Param("post_id")
-    var postID uint
-    _, err := fmt.Sscanf(postIDParam, "%d", &postID)
-    if err != nil {
-        ctx.JSON(http.StatusBadRequest, utils.ErrorResponse(utils.ErrInvalidPostID))
-        return
-    }
+	postID, ok := utils.GetUintIDParam(ctx, "id", utils.ErrInvalidPostID)
+	if !ok {
+		return
+	}
 
-    // Lấy page và page_size từ query
-    page := 1
-    pageSize := 10
-    if p := ctx.Query("page"); p != "" {
-        if v, err := strconv.Atoi(p); err == nil && v > 0 {
-            page = v
-        }
-    }
-    if ps := ctx.Query("page_size"); ps != "" {
-        if v, err := strconv.Atoi(ps); err == nil && v > 0 {
-            pageSize = v
-        }
-    }
+	page, pageSize, ok := utils.GetPaginationParams(ctx)
+	if !ok {
+		return
+	}
 
-    comments, total, err := c.service.GetCommentsByPostID(postID, page, pageSize)
-    if err != nil {
-        ctx.JSON(http.StatusInternalServerError, utils.ErrorResponse(err.Error()))
-        return
-    }
+	comments, total, err := c.service.GetCommentsByPostID(postID, page, pageSize)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, utils.ErrorResponse("comment", err.Error()))
+		return
+	}
 
-    // Convert to DTO
-    var resp []dto.CommentResponse
-    for _, cmt := range comments {
-        resp = append(resp, dto.CommentResponse{
-            ID:        cmt.ID,
-            PostID:    cmt.PostID,
-            UserID:    cmt.UserID,
-            Content:   cmt.Content,
-            CreatedAt: cmt.CreatedAt,
-            UpdatedAt: cmt.CreatedAt,
-        })
-    }
+	var resp []dto.CommentResponse
+	for _, cmt := range comments {
+		resp = append(resp, dto.CommentResponse{
+			ID:        cmt.ID,
+			PostID:    cmt.PostID,
+			UserID:    cmt.UserID,
+			Content:   cmt.Content,
+			CreatedAt: cmt.CreatedAt,
+			UpdatedAt: cmt.CreatedAt,
+		})
+	}
 
-    ctx.JSON(http.StatusOK, utils.SuccessResponse(gin.H{
-        "comments": resp,
-        "total":    total,
-        "page":     page,
-        "page_size": pageSize,
-    }))
+	ctx.JSON(http.StatusOK, utils.SuccessResponse(gin.H{
+		"comments": resp,
+		"total":    total,
+		"page":     page,
+		"page_size": pageSize,
+	}))
 }

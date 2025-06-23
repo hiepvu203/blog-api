@@ -54,3 +54,7 @@ func (s *UserService) ChangeUserRole(userID uint, newRole string) error {
     user.Role = newRole
     return s.userRepo.Update(user)
 }
+
+func (s *UserService) UpdateCanPost(userID uint, canPost bool) error {
+    return s.userRepo.UpdateCanPost(userID, canPost)
+}

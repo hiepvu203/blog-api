@@ -10,7 +10,7 @@ type Post struct {
 	Title       string    `gorm:"type:varchar(200);not null"`
 	Slug        string    `gorm:"type:varchar(200);unique;not null"`
 	Content     string    `gorm:"type:text;not null"`
-	Thumbnail   string    `gorm:"type:text"`
+	Thumbnail   string    `gorm:"type:text;not null"`
 	CategoryID  uint
 	AuthorID    uint
 	Status      string    `gorm:"type:post_status;default:'draft'"` // ENUM

@@ -6,6 +6,8 @@ const (
     ErrInvalidUserIDType      = "Invalid userID type"
     ErrAdminAccessRequired    = "Admin access required"
     ErrInvalidToken           = "Invalid token"
+	ErrInvalidEmail			  = "Invalid email"
+	ErrTokenExpired			  = "Token expired"
     ErrInvalidTokenClaims     = "Invalid token claims"
     ErrInvalidPostID          = "Invalid post id"
     ErrPostNotFound           = "Post not found"

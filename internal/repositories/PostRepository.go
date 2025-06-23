@@ -15,6 +15,12 @@ func NewPostRepository(db *gorm.DB) *PostRepository {
 	return &PostRepository{db: db}
 }
 
+func (r *PostRepository) IsSlugExists(slug string) (bool, error) {
+	var count int64
+	err := r.db.Model(&entities.Post{}).Unscoped().Where("slug = ?", slug).Count(&count).Error
+	return count > 0, err
+}
+
 func (r *PostRepository) Create(post *entities.Post) error {
 	return r.db.Create(post).Error
 }
