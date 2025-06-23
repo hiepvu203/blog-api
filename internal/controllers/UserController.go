@@ -52,7 +52,7 @@ func (c *UserController) Login(ctx *gin.Context) {
 	}
 
 	user, token, errs := c.authService.Login(req.Email, req.Password)
-	if errs != nil && len(errs) > 0  {
+	if len(errs) > 0  {
 		var fieldErrors []utils.FieldError
         for _, msg := range errs {
             fieldErrors = append(fieldErrors, utils.FieldError{Field: "credentials", Message: msg})

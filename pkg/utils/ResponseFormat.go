@@ -8,15 +8,15 @@ import (
 )
 
 type FieldError struct  {
-	Field 	string `json:"Field`
+	Field 	string `json:"Field"`
 	Tag 	string `json:"Tag"`
-	Param 	string `json:"Param`
+	Param 	string `json:"Param"`
 	Message string `json:"Message"`
 }
 
 type Response struct {
 	Success bool        `json:"success"`
-	Message string      `json:"message,omitempty"` // omitempty: bỏ qua nếu rỗng
+	Message string      `json:"message,omitempty"`
 	Data    interface{} `json:"data,omitempty"`
 	Error   interface{} `json:"error,omitempty"`
 }
