@@ -1,10 +1,13 @@
 package middlewares
 
 import (
+	"blog-api/internal/entities"
 	"blog-api/pkg/utils"
+	"fmt"
 	"github.com/gin-gonic/gin"
-    "errors"
-	"log"
+	"gorm.io/gorm"
+	"net/http"
+	"strconv"
 )
 
 func OwnerOrAdminMiddleware(db *gorm.DB) gin.HandlerFunc{
