@@ -3,13 +3,23 @@ package main
 import (
 	"blog-api/internal/config"
 	"blog-api/internal/routes"
-	"regexp"
+	"log"
 	"os"
+	"regexp"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
 	"github.com/go-playground/validator/v10"
+	"github.com/joho/godotenv"
 )
+
+func init() {
+    if os.Getenv("RENDER") == "" {
+        if err := godotenv.Load(); err != nil {
+            log.Println("No .env file found (this is OK in production)")
+        }
+    }
+}
 
 func SlugValidator(fl validator.FieldLevel) bool {
     value := fl.Field().String()
