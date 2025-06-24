@@ -277,5 +277,5 @@ func (c *UserController) UpdateCanPost(ctx *gin.Context) {
         ctx.JSON(http.StatusInternalServerError, utils.ErrorResponse("user", err.Error()))
         return
     }
-    ctx.JSON(http.StatusOK, utils.SuccessResponse(gin.H{"message": "cập nhật quyền đăng bài thành công"}))
+    ctx.JSON(http.StatusOK, utils.SuccessResponse(gin.H{"message": "successfully updated posting permission"}))
 }

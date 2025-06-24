@@ -10,7 +10,7 @@ type User struct {
 	Username	string		`gorm:"type:varchar(50);unique;not null"`
 	Email 		string		`gorm:"type:varchar(100);unique;not null"`
 	Password	string		`gorm:"type:varchar(255);not null"`
-	Role		string 		`gorm:"type:user_role;default:'client';not null"` // ENUM
+	Role		string 		`gorm:"type:user_role;default:'client';not null"` 
 	CreatedAt	time.Time
 
 	// relationships
@@ -18,5 +18,5 @@ type User struct {
 	Comments	[]Comment 	`gorm:"foreignKey:UserID"`
 
 	DeletedAt   gorm.DeletedAt `gorm:"index"`
-	CanPost 	bool 		`gorm:"default:true"` // true: được đăng bài, false: bị chặn đăng bài
+	CanPost 	bool 		`gorm:"default:true"` 
 }

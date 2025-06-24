@@ -19,7 +19,7 @@ func AuthMiddleware() gin.HandlerFunc{
 			return
 		}
 
-		// Loại bỏ tiền tố "Bearer " 
+		// remove the 'Bearer' prefix
         if len(tokenString) > 7 && tokenString[:7] == "Bearer " {
             tokenString = tokenString[7:]
         }

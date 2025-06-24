@@ -47,7 +47,7 @@ func (s *PostService) CreatePost(req *dto.CreatePostRequest, authorID uint) erro
     }
 
     if !user.CanPost {
-        return errors.New("bạn đã bị chặn quyền đăng bài")
+        return errors.New("you have been blocked from posting")
     }
 
     post := &entities.Post{

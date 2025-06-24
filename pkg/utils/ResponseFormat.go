@@ -3,7 +3,6 @@ package utils
 import (
 	"errors"
 	"fmt"
-
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
 )
@@ -56,19 +55,19 @@ func ParseValidationErrors(err error) []FieldError {
             var msg string
             switch tag {
             case "required":
-                msg = fmt.Sprintf("%s là bắt buộc", field)
+                msg = fmt.Sprintf("%s is required", field)
             case "min":
-                msg = fmt.Sprintf("%s phải có ít nhất %s ký tự", field, param)
+                msg = fmt.Sprintf("%s must have at least %s characters", field, param)
             case "max":
-                msg = fmt.Sprintf("%s không được vượt quá %s ký tự", field, param)
+                msg = fmt.Sprintf("%s must not exceed %s characters", field, param)
             case "slug":
-				msg = "Slug chỉ được chứa chữ thường, số, dấu gạch ngang. Không bắt đầu/kết thúc bằng dấu gạch ngang. Không có hai dấu gạch ngang liên tiếp"			
+				msg = "slug can only contain lowercase letters, numbers, and hyphens. It cannot start or end with a hyphen, anh cannot have two consecutive hyphens."			
 			case "username":
-				msg = "Username chỉ được chứa chữ cái, số, dấu gạch dưới hoặc gạch ngang, không khoảng trắng, không ký tự đặc biệt"
+				msg = "username can only contain letters, numbers, underscores, and hyphens; no spaces or special characters."
 			case "strongpwd":
-				msg = "Password phải có ít nhất 8 ký tự, gồm chữ hoa, chữ thường, số và ký tự đặc biệt"			
+				msg = "Password must have at least 8 characters, including uppercase letters, lowercase letters, numbers, and special characters."			
 			default:
-                msg = fmt.Sprintf("%s không hợp lệ", field)
+                msg = fmt.Sprintf("Invalid %s", field)
             }
             errs = append(errs, FieldError{
                 Field:   field,

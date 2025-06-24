@@ -11,7 +11,7 @@ func SendResetEmail(to, resetLink string) error {
 	m.SetHeader("From", os.Getenv("SMTP_FROM"))
 	m.SetHeader("To", to)
 	m.SetHeader("Subject", "Reset your password")
-	m.SetBody("text/html", "Click vào link để đặt lại mật khẩu: <a href='"+resetLink+"'>Reset Password</a>")
+	m.SetBody("text/html", "Click the link to reset your password: <a href='"+resetLink+"'>Reset Password</a>")
 
 	d := gomail.NewDialer(
 		os.Getenv("SMTP_HOST"),
