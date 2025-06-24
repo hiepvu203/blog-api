@@ -14,7 +14,8 @@ func OwnerOrAdminMiddleware(db *gorm.DB) gin.HandlerFunc{
 	return func(ctx *gin.Context) {
         userID, ok := ctx.Get("userID")
         if !ok {
-            ctx.AbortWithStatusJSON(http.StatusUnauthorized, utils.ErrorResponse("authorization",utils.ErrUnauthorized))
+            utils.SendFail(ctx, http.StatusUnauthorized, "401", utils.ErrUnauthorized, nil)
+            ctx.Abort()
             return
         }
         role, _ := ctx.Get("role")
@@ -25,7 +26,8 @@ func OwnerOrAdminMiddleware(db *gorm.DB) gin.HandlerFunc{
 
         uidFloat, ok := userID.(float64)
         if !ok {
-            ctx.AbortWithStatusJSON(http.StatusInternalServerError, utils.ErrorResponse("userID",utils.ErrInvalidUserIDType))
+            utils.SendFail(ctx, http.StatusInternalServerError, "500", utils.ErrInvalidUserIDType, nil)
+            ctx.Abort()
             return
         }
         uid := uint(uidFloat)
@@ -33,18 +35,21 @@ func OwnerOrAdminMiddleware(db *gorm.DB) gin.HandlerFunc{
         postIDParam := ctx.Param("id")
         postID, err := strconv.ParseUint(postIDParam, 10, 64)
         if err != nil {
-            ctx.AbortWithStatusJSON(http.StatusBadRequest, utils.ErrorResponse("postID",utils.ErrInvalidPostID))
+            utils.SendFail(ctx, http.StatusBadRequest, "400", utils.ErrInvalidPostID, nil)
+            ctx.Abort()
             return
         }
 
         var post entities.Post
         if err := db.First(&post, postID).Error; err != nil {
-            ctx.AbortWithStatusJSON(http.StatusNotFound, utils.ErrorResponse("",utils.ErrPostNotFound))
+            utils.SendFail(ctx, http.StatusNotFound, "404", utils.ErrPostNotFound, nil)
+            ctx.Abort()
             return
         }
 
         if post.AuthorID != uid {
-            ctx.AbortWithStatusJSON(http.StatusForbidden, utils.ErrorResponse("",utils.ErrNoPermissionPost))
+            utils.SendFail(ctx, http.StatusForbidden, "403", utils.ErrNoPermissionPost, nil)
+            ctx.Abort()
             return
         }
         ctx.Next()
@@ -55,30 +60,35 @@ func CommentOwnerOrPostOwnerMiddleware(db *gorm.DB) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		userID, ok := ctx.Get("userID")
 		if !ok {
-			ctx.AbortWithStatusJSON(http.StatusUnauthorized, utils.ErrorResponse("authorization",utils.ErrUnauthorized))
+			utils.SendFail(ctx, http.StatusUnauthorized, "401", utils.ErrUnauthorized, nil)
+			ctx.Abort()
 			return
 		}
 		uid, ok := userID.(float64)
 		if !ok {
-			ctx.AbortWithStatusJSON(http.StatusInternalServerError, utils.ErrorResponse("userID",utils.ErrInvalidUserIDType))
+			utils.SendFail(ctx, http.StatusInternalServerError, "500", utils.ErrInvalidUserIDType, nil)
+			ctx.Abort()
 			return
 		}
 		commentIDParam := ctx.Param("comment_id")
 		var commentID uint
 		_, err := fmt.Sscanf(commentIDParam, "%d", &commentID)
 		if err != nil {
-			ctx.AbortWithStatusJSON(http.StatusBadRequest, utils.ErrorResponse("commentID",utils.ErrInvalidCommentID))
+			utils.SendFail(ctx, http.StatusBadRequest, "400", utils.ErrInvalidCommentID, nil)
+			ctx.Abort()
 			return
 		}
 
 		var comment entities.Comment
 		if err := db.Preload("Post").First(&comment, commentID).Error; err != nil {
-			ctx.AbortWithStatusJSON(http.StatusNotFound, utils.ErrorResponse("",utils.ErrCommentNotFound))
+			utils.SendFail(ctx, http.StatusNotFound, "404", utils.ErrCommentNotFound, nil)
+			ctx.Abort()
 			return
 		}
 
 		if comment.UserID != uint(uid) && comment.Post.AuthorID != uint(uid) {
-			ctx.AbortWithStatusJSON(http.StatusForbidden, utils.ErrorResponse("",utils.ErrNoPermissionComment))
+			utils.SendFail(ctx, http.StatusForbidden, "403", utils.ErrNoPermissionComment, nil)
+			ctx.Abort()
 			return
 		}
 		ctx.Next()

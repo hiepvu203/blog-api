@@ -20,7 +20,7 @@ func NewCommentController(service *services.CommentService) *CommentController {
 func (c *CommentController) CreateComment(ctx *gin.Context) {
 	var req dto.CreateCommentRequest
 	if validationErrs := utils.BindAndValidate(ctx, &req); len(validationErrs) > 0 {
-		ctx.JSON(http.StatusBadRequest, gin.H{"success": false, "errors": validationErrs})
+		utils.SendFail(ctx, http.StatusBadRequest, "400", "VALIDATION_FAILED", validationErrs)
 		return
 	}
 
@@ -36,16 +36,16 @@ func (c *CommentController) CreateComment(ctx *gin.Context) {
 	req.PostID = postID
 
 	if err := c.service.CreateComment(&req, uint(uid)); err != nil {
-		ctx.JSON(http.StatusInternalServerError, utils.ErrorResponse("comment", err.Error()))
+		utils.SendFail(ctx, http.StatusInternalServerError, "500", err.Error(), nil)
 		return
 	}
-	ctx.JSON(http.StatusCreated, utils.SuccessResponse(gin.H{"message": utils.MsgCommentCreated}))
+	utils.SendSuccess(ctx, http.StatusCreated, "201", utils.MsgCategoryCreated, nil)
 }
 
 func (c *CommentController) UpdateComment(ctx *gin.Context) {
 	var req dto.UpdateCommentRequest
 	if validationErrs := utils.BindAndValidate(ctx, &req); len(validationErrs) > 0 {
-		ctx.JSON(http.StatusBadRequest, gin.H{"success": false, "errors": validationErrs})
+		utils.SendFail(ctx, http.StatusBadRequest, "400", "VALIDATION_FAILED", validationErrs)
 		return
 	}
 
@@ -55,10 +55,10 @@ func (c *CommentController) UpdateComment(ctx *gin.Context) {
 	}
 
 	if err := c.service.UpdateComment(commentID, req.Content); err != nil {
-		ctx.JSON(http.StatusInternalServerError, utils.ErrorResponse("comment", err.Error()))
+		utils.SendFail(ctx, http.StatusNotFound, "404", utils.ErrCategoryNotFound, nil)
 		return
 	}
-	ctx.JSON(http.StatusOK, utils.SuccessResponse(gin.H{"message": utils.MsgCommentUpdated}))
+	utils.SendSuccess(ctx, http.StatusOK, "200", utils.MsgCategoryUpdated, nil)
 }
 
 func (c *CommentController) DeleteComment(ctx *gin.Context) {
@@ -67,10 +67,10 @@ func (c *CommentController) DeleteComment(ctx *gin.Context) {
 		return
 	}
 	if err := c.service.DeleteComment(commentID); err != nil {
-		ctx.JSON(http.StatusInternalServerError, utils.ErrorResponse("comment", err.Error()))
+		utils.SendFail(ctx, http.StatusNotFound, "404", utils.ErrCategoryNotFound, nil)
 		return
 	}
-	ctx.JSON(http.StatusOK, utils.SuccessResponse(gin.H{"message": utils.MsgCommentDeleted}))
+	utils.SendSuccess(ctx, http.StatusOK, "200", utils.MsgCategoryDeleted, nil)
 }
 
 func (c *CommentController) GetCommentsByPost(ctx *gin.Context) {
@@ -86,7 +86,7 @@ func (c *CommentController) GetCommentsByPost(ctx *gin.Context) {
 
 	comments, total, err := c.service.GetCommentsByPostID(postID, page, pageSize)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, utils.ErrorResponse("comment", err.Error()))
+		utils.SendFail(ctx, http.StatusInternalServerError, "500", err.Error(), nil)
 		return
 	}
 
@@ -102,10 +102,12 @@ func (c *CommentController) GetCommentsByPost(ctx *gin.Context) {
 		})
 	}
 
-	ctx.JSON(http.StatusOK, utils.SuccessResponse(gin.H{
-		"comments": resp,
-		"total":    total,
-		"page":     page,
-		"page_size": pageSize,
-	}))
+	utils.SendSuccess(ctx, http.StatusOK, "COMMENTS_FETCHED", "Lấy danh sách bình luận thành công", gin.H{
+    "comments": resp,
+    "meta": gin.H{
+        "total":    total,
+        "page":     page,
+        "page_size": pageSize,
+    },
+})
 }

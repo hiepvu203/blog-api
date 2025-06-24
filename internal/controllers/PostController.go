@@ -20,36 +20,47 @@ func NewPostController(service *services.PostService) *PostController {
 func (c *PostController) CreatePost(ctx *gin.Context) {
 	var req dto.CreatePostRequest
 	
-	// Step 1: Get DTO validation errors
-	allErrors := utils.BindAndValidate(ctx, &req)
+	validationErrs := utils.BindAndValidate(ctx, &req)
 
-	// Step 2: Get user ID from context
 	uid, ok := utils.GetUserIDFromContext(ctx)
 	if !ok {
 		return
 	}
 
-	// Step 3: Get business logic validation errors from the service
-	serviceErrs, err := c.service.ValidatePostCreation(&req)
+	if validationErrs == nil {
+		validationErrs = make(map[string]string)
+	}
+
+	categoryExists, err := c.service.CategoryExists(req.CategoryID)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, utils.ErrorResponse("database", err.Error()))
+		utils.SendFail(ctx, http.StatusInternalServerError, "DB_ERROR", "Lỗi kiểm tra danh mục", nil)
 		return
 	}
-	allErrors = append(allErrors, serviceErrs...)
+	if !categoryExists {
+		validationErrs["category_id"] = "category does not exist"
+	}
 
-	// Step 4: If there are any errors from steps 1 or 3, return them all.
-	if len(allErrors) > 0 {
-		ctx.JSON(http.StatusBadRequest, gin.H{"success": false, "errors": allErrors})
+	slugExists, err := c.service.IsSlugExists(req.Slug)
+	if err != nil {
+		utils.SendFail(ctx, http.StatusInternalServerError, "DB_ERROR", "Lỗi kiểm tra slug", nil)
+		return
+	}
+	if slugExists {
+		validationErrs["slug"] = "slug already exists"
+	}
+
+	if len(validationErrs) > 0 {
+		utils.SendFail(ctx, http.StatusBadRequest, "VALIDATION_F400AILED", "VALIDATION_FAILED", validationErrs)
 		return
 	}
 
-	// Step 5: If all validations passed, create the post.
+	// Create the post
 	if err := c.service.CreatePost(&req, uint(uid)); err != nil {
-		ctx.JSON(http.StatusInternalServerError, utils.ErrorResponse("post", err.Error()))
+		utils.SendFail(ctx, http.StatusInternalServerError, "500", err.Error(), nil)
 		return
 	}
 
-	ctx.JSON(http.StatusCreated, utils.SuccessResponse(gin.H{"message": utils.MsgPostCreated}))
+	utils.SendSuccess(ctx, http.StatusCreated, "201", utils.MsgPostCreated, nil)
 }
 
 func (c *PostController) UpdatePost(ctx *gin.Context) {
@@ -59,16 +70,16 @@ func (c *PostController) UpdatePost(ctx *gin.Context) {
 	}
 
 	var req dto.UpdatePostRequest
-	if validationErrs := utils.BindAndValidate(ctx, &req); len(validationErrs) > 0 {
-		ctx.JSON(http.StatusBadRequest, gin.H{"errors": validationErrs})
+	if validationErrs := utils.BindAndValidate(ctx, &req); validationErrs != nil {
+		utils.SendFail(ctx, http.StatusBadRequest, "400", "VALIDATION_FAILED", validationErrs)
 		return
 	}
 
 	if err := c.service.UpdatePost(uint(id), &req); err != nil {
-		ctx.JSON(http.StatusBadRequest, utils.ErrorResponse("post", err.Error()))
+		utils.SendFail(ctx, http.StatusBadRequest, "400", err.Error(), nil)
 		return
 	}
-	ctx.JSON(http.StatusOK, utils.SuccessResponse(gin.H{"message": utils.MsgPostUpdated}))
+	utils.SendSuccess(ctx, http.StatusOK, "200", utils.MsgPostUpdated, nil)
 }
 
 func (c *PostController) DeletePost(ctx *gin.Context) {
@@ -78,10 +89,10 @@ func (c *PostController) DeletePost(ctx *gin.Context) {
 	}
 
 	if err := c.service.DeletePost(uint(id)); err != nil {
-		ctx.JSON(http.StatusNotFound, utils.ErrorResponse("post", utils.ErrPostNotFound))
+		utils.SendFail(ctx, http.StatusNotFound, "404", utils.ErrPostNotFound, nil)
 		return
 	}
-	ctx.JSON(http.StatusOK, utils.SuccessResponse(gin.H{"message": utils.MsgPostDeleted}))
+	utils.SendSuccess(ctx, http.StatusOK, "200", utils.MsgPostDeleted, nil)
 }
 
 func (c *PostController) GetAllPosts(ctx *gin.Context) {
@@ -97,7 +108,7 @@ func (c *PostController) GetAllPosts(ctx *gin.Context) {
 
 	posts, total, err := c.service.ListPosts(title, content, category, author, "published", page, pageSize)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, utils.ErrorResponse("posts", utils.ErrCouldNotFetchPosts))
+		utils.SendFail(ctx, http.StatusInternalServerError, "500", utils.ErrCouldNotFetchPosts, nil)
 		return
 	}
 	var resp []dto.PostResponse
@@ -105,26 +116,9 @@ func (c *PostController) GetAllPosts(ctx *gin.Context) {
 		resp = append(resp, dto.NewPostResponse(&p))
 	}
 
-	if total == 0 {
-		ctx.JSON(http.StatusOK, utils.SuccessResponse(gin.H{
-			"success": true,
-			"data":    resp,
-			"total":   0,
-			"page":    page,
-			"page_size": pageSize,
-			"message": utils.NotFoundArticles,
-		}))
-		return
-	}
-
-	ctx.JSON(http.StatusOK, utils.SuccessResponse(gin.H{
-		"success": true,
-		"data": resp,
-		"total": total,
-		"page": page,
-		"page_size": pageSize,
-		"message": utils.SearchSuccess,
-	}))
+	meta := gin.H{"page": page, "page_size": pageSize, "total": total}
+	data := gin.H{"posts": resp, "meta": meta}
+	utils.SendSuccess(ctx, http.StatusOK, "200", utils.SearchSuccess, data)
 }
 
 func (c *PostController) GetPostDetail(ctx *gin.Context) {
@@ -134,8 +128,8 @@ func (c *PostController) GetPostDetail(ctx *gin.Context) {
 	}
 	post, err := c.service.GetPostByID(uint(id))
 	if err != nil {
-		ctx.JSON(http.StatusNotFound, utils.ErrorResponse("post", utils.ErrPostNotFound))
+		utils.SendFail(ctx, http.StatusNotFound, "404", utils.ErrPostNotFound, nil)
 		return
 	}
-	ctx.JSON(http.StatusOK, utils.SuccessResponse(dto.NewPostResponse(post)))
+	utils.SendSuccess(ctx, http.StatusOK, "200", "article details successfully retrieved", gin.H{"post": dto.NewPostResponse(post)})
 }

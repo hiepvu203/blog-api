@@ -35,7 +35,6 @@ type PostResponse struct {
 	UpdatedAt  string `json:"updated_at"`
 }
 
-// Convert entities.Post -> dto.PostResponse
 func NewPostResponse(p *entities.Post) PostResponse {
     return PostResponse{
         ID:         p.ID,

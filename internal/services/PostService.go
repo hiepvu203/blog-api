@@ -4,7 +4,8 @@ import (
 	"blog-api/internal/dto"
 	"blog-api/internal/entities"
 	"blog-api/internal/repositories"
-	"blog-api/pkg/utils"
+
+	// "blog-api/pkg/utils"
 	"errors"
 )
 
@@ -18,26 +19,12 @@ func NewPostService(repo *repositories.PostRepository, categoryRepo *repositorie
     return &PostService{repo: repo, categoryRepo: categoryRepo, userRepo: userRepo}
 }
 
-func (s *PostService) ValidatePostCreation(req *dto.CreatePostRequest) ([]utils.FieldError, error) {
-	var errs []utils.FieldError
+func (s *PostService) CategoryExists(id uint) (bool, error) {
+	return s.categoryRepo.Exists(id)
+}
 
-	existsCate, err := s.categoryRepo.Exists(req.CategoryID)
-	if err != nil {
-		return nil, err // Internal server error
-	}
-	if !existsCate {
-		errs = append(errs, utils.FieldError{Field: "category_id", Message: "category does not exist"})
-	}
-
-	existsSlug, err := s.repo.IsSlugExists(req.Slug)
-	if err != nil {
-		return nil, err // Internal server error
-	}
-	if existsSlug {
-		errs = append(errs, utils.FieldError{Field: "slug", Message: "slug already exists"})
-	}
-
-	return errs, nil
+func (s *PostService) IsSlugExists(slug string) (bool, error) {
+	return s.repo.IsSlugExists(slug)
 }
 
 func (s *PostService) CreatePost(req *dto.CreatePostRequest, authorID uint) error {

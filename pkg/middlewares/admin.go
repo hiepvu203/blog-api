@@ -2,6 +2,7 @@ package middlewares
 
 import (
 	"blog-api/pkg/utils"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -10,7 +11,8 @@ func AdminMiddleware() gin.HandlerFunc{
 		role, exists := ctx.Get("role")
 
 		if !exists || role != "admin"{
-			ctx.AbortWithStatusJSON(403, utils.ErrorResponse("",utils.ErrAdminAccessRequired))
+			utils.SendFail(ctx, 403, "403", utils.ErrAdminAccessRequired, nil)
+			ctx.Abort()
 			return
 		}
 		ctx.Next()

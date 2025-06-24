@@ -7,45 +7,47 @@ import (
 	"github.com/go-playground/validator/v10"
 )
 
-type FieldError struct  {
-	Field 	string `json:"Field"`
-	Message string `json:"Message"`
-}
-
-type Response struct {
-	Success bool        `json:"success"`
+type APIResponse struct {
+	Status 	string 	    `json:"status"`
+	Code 	string      `json:"code"`
 	Message string      `json:"message,omitempty"`
 	Data    interface{} `json:"data,omitempty"`
-	Error   interface{} `json:"error,omitempty"`
 }
 
-func SuccessResponse(data interface{}) Response {
-	return Response{
-		Success: true,
+type Meta struct {
+	Page   	 int `json:"page"`
+	PageSize int `json:"page_size"`
+	Total    int `json:"total"`
+}
+
+func SendSuccess(ctx *gin.Context, httpCode int, apiCode , message string, data interface{}) {
+	ctx.JSON(httpCode, APIResponse{
+		Status:  "success",
+		Code:    apiCode,
+		Message: message,
 		Data:    data,
-	}
+	})
 }
 
-func ErrorResponse(field , message string) Response {
-	return Response{
-		Success: false,
-		Error:   FieldError{
-			Field: field,
-			Message: message,
-		},
-	}
+func SendFail(ctx *gin.Context, httpCode int, apiCode, message string, data interface{}) {
+	ctx.JSON(httpCode, APIResponse{
+		Status:  "error",
+		Code:    apiCode,
+		Message: message,
+		Data:    data,
+	})
 }
 
-func BindAndValidate(ctx *gin.Context, obj interface{}) []FieldError {
+func BindAndValidate(ctx *gin.Context, obj interface{}) map[string]string {
 	if err := ctx.ShouldBindJSON(obj); err != nil {
 		return ParseValidationErrors(err)
 	}
 	return nil
 }
 
-func ParseValidationErrors(err error) []FieldError {
+func ParseValidationErrors(err error) map[string]string {
     var ve validator.ValidationErrors
-    var errs []FieldError
+    errs := make(map[string]string)
 
     if errors.As(err, &ve) {
         for _, fe := range ve {
@@ -69,10 +71,7 @@ func ParseValidationErrors(err error) []FieldError {
 			default:
                 msg = fmt.Sprintf("Invalid %s", field)
             }
-            errs = append(errs, FieldError{
-                Field:   field,
-                Message: msg,
-            })
+            errs[field] = msg
         }
     }
     return errs

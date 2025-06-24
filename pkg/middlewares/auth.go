@@ -15,7 +15,8 @@ func AuthMiddleware() gin.HandlerFunc{
 		tokenString := ctx.GetHeader("Authorization")
 		if tokenString == "" {
 			log.Println("Auth failed: missing token")
-			ctx.AbortWithStatusJSON(401, utils.ErrorResponse("token",utils.ErrNotToken))
+			utils.SendFail(ctx, 401, "401", utils.ErrNotToken, nil)
+			ctx.Abort()
 			return
 		}
 
@@ -28,19 +29,22 @@ func AuthMiddleware() gin.HandlerFunc{
 		if err != nil {
 			if errors.Is(err, jwt.ErrTokenExpired) {
 				log.Println("Auth failed: token expired")
-				ctx.AbortWithStatusJSON(401, utils.ErrorResponse("token","Token expired"))
+				utils.SendFail(ctx, 401, "401", "token expired", nil)
+				ctx.Abort()
 				return
 			}
 			log.Println("Auth failed: invalid token:", err)
-			ctx.AbortWithStatusJSON(401, utils.ErrorResponse("token",utils.ErrInvalidToken))
+			utils.SendFail(ctx, 401, "401", utils.ErrInvalidToken, nil)
+			ctx.Abort()
 			return
 		}
 
 		if claims, ok := token.Claims.(jwt.MapClaims); ok {
 			ctx.Set("userID", claims["user_id"])
 			ctx.Set("role", claims["role"])
-		}else {
-			ctx.AbortWithStatusJSON(401, utils.ErrorResponse("token",utils.ErrInvalidTokenClaims))
+		} else {
+			utils.SendFail(ctx, 401, "401", utils.ErrInvalidTokenClaims, nil)
+			ctx.Abort()
 			return
 		}
 		ctx.Next()
