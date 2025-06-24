@@ -4,6 +4,7 @@ import (
 	"blog-api/internal/entities"
 	"blog-api/internal/repositories"
 	"blog-api/pkg/utils"
+	"blog-api/pkg/helper"
 	"errors"
 	"fmt"
 	"regexp"
@@ -97,7 +98,7 @@ func (s *AuthService) ForgotPassword(email string) error {
     }
 
     resetLink := fmt.Sprintf("https://yourdomain.com/reset-password?token=%s", token)
-    return utils.SendResetEmail(email, resetLink)
+    return helper.SendResetEmail(email, resetLink)
 }
 
 func (s *AuthService) ResetPassword(token, newPassword string) error {

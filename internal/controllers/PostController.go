@@ -4,7 +4,6 @@ import (
 	"blog-api/internal/dto"
 	"blog-api/internal/services"
 	"blog-api/pkg/utils"
-	"errors"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -66,12 +65,7 @@ func (c *PostController) UpdatePost(ctx *gin.Context) {
 	}
 
 	if err := c.service.UpdatePost(uint(id), &req); err != nil {
-		var appErr *utils.AppError
-		if errors.As(err, &appErr) {
-			ctx.JSON(http.StatusBadRequest, utils.ErrorResponse(appErr.Field, appErr.Message))
-		} else {
-			ctx.JSON(http.StatusInternalServerError, utils.ErrorResponse("post", err.Error()))
-		}
+		ctx.JSON(http.StatusBadRequest, utils.ErrorResponse("post", err.Error()))
 		return
 	}
 	ctx.JSON(http.StatusOK, utils.SuccessResponse(gin.H{"message": utils.MsgPostUpdated}))

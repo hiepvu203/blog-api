@@ -4,13 +4,12 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
 )
 
 type FieldError struct  {
 	Field 	string `json:"Field"`
-	Tag 	string `json:"Tag"`
-	Param 	string `json:"Param"`
 	Message string `json:"Message"`
 }
 
@@ -36,6 +35,13 @@ func ErrorResponse(field , message string) Response {
 			Message: message,
 		},
 	}
+}
+
+func BindAndValidate(ctx *gin.Context, obj interface{}) []FieldError {
+	if err := ctx.ShouldBindJSON(obj); err != nil {
+		return ParseValidationErrors(err)
+	}
+	return nil
 }
 
 func ParseValidationErrors(err error) []FieldError {
@@ -66,11 +72,10 @@ func ParseValidationErrors(err error) []FieldError {
             }
             errs = append(errs, FieldError{
                 Field:   field,
-                Tag:     tag,
-                Param:   param,
                 Message: msg,
             })
         }
     }
     return errs
 }
+

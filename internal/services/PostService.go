@@ -48,7 +48,7 @@ func (s *PostService) CreatePost(req *dto.CreatePostRequest, authorID uint) erro
     }
     // 2. Kiểm tra quyền đăng bài
     if !user.CanPost {
-        return utils.NewAppError("user", "Bạn đã bị chặn quyền đăng bài")
+        return errors.New("Bạn đã bị chặn quyền đăng bài")
     }
 
     // 3. Tạo post như cũ nếu user được phép
@@ -71,7 +71,7 @@ func (s *PostService) UpdatePost(id uint, req *dto.UpdatePostRequest) error {
             return err
         }
         if !exists {
-            return utils.NewAppError("category_id", "category does not exist")
+            return errors.New("category does not exist")
         }
     }
     updated := &entities.Post{}
