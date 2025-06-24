@@ -4,10 +4,7 @@ import (
 	"blog-api/internal/config"
 	"blog-api/internal/routes"
 	"regexp"
-
-	// "blog-api/pkg/utils"
 	"os"
-
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
@@ -27,9 +24,15 @@ func UsernameValidator(fl validator.FieldLevel) bool {
 }
 
 func StrongPasswordValidator(fl validator.FieldLevel) bool {
-    value := fl.Field().String()
-    matched, _ := regexp.MatchString(`^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[^a-zA-Z0-9]).{8,}$`, value)
-    return matched
+	value := fl.Field().String()
+	if len(value) < 8 {
+		return false
+	}
+	hasLower := regexp.MustCompile(`[a-z]`).MatchString(value)
+	hasUpper := regexp.MustCompile(`[A-Z]`).MatchString(value)
+	hasDigit := regexp.MustCompile(`\d`).MatchString(value)
+	hasSpecial := regexp.MustCompile(`[^a-zA-Z0-9]`).MatchString(value)
+	return hasLower && hasUpper && hasDigit && hasSpecial
 }
 
 func main(){
@@ -53,15 +56,10 @@ func main(){
     	v.RegisterValidation("strongpwd", StrongPasswordValidator)
     }
 
-	// routes.SetupRoutes(r)
 	routes.SetupUserRoutes(r, config.DB)
 	routes.SetupCategoryRoutes(r, config.DB)
 	routes.SetupPostRoutes(r, config.DB)
 	routes.SetupCommentRoutes(r, config.DB)
-
-	// r.NoRoute(func(ctx *gin.Context) {
-    //     ctx.JSON(404, utils.ErrorResponse("Endpoint not found"))
-    // })
 
 	r.Run(":" + os.Getenv("PORT"))
 }
