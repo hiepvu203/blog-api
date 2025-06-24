@@ -14,10 +14,11 @@ import (
 var DB *gorm.DB
 
 func LoadEnv(){
-	err := godotenv.Load()
-	if err != nil{
-		log.Fatal("Error when load .env file")
-	}
+	if os.Getenv("RENDER") == "" {
+        if err := godotenv.Load(); err != nil {
+            log.Println("No .env file found (this is OK in production)")
+        }
+    }
 }
 
 func ConnectDB(){
