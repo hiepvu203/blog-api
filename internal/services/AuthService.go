@@ -3,13 +3,14 @@ package services
 import (
 	"blog-api/internal/entities"
 	"blog-api/internal/repositories"
-	"blog-api/pkg/utils"
 	"blog-api/pkg/helper"
-	"errors"
-	"fmt"
-	"regexp"
-	"time"
+	"blog-api/pkg/utils"
 
+	// "blog-api/pkg/helper"
+	"errors"
+	// "fmt"
+	"regexp"
+	// "time"
 	"gorm.io/gorm"
 )
 
@@ -34,7 +35,7 @@ func (s *AuthService) Register(email, password, username string) (*entities.User
         return nil, errors.New("username already exists")
     }
 
-	hashedPassword, err := utils.HashPassword(password)
+	hashedPassword, err := helper.HashPassword(password)
 	if err != nil {
 		return nil, err
 	}
@@ -43,7 +44,7 @@ func (s *AuthService) Register(email, password, username string) (*entities.User
 		Email:    email,
 		Password: hashedPassword,
 		Username: username,
-		Role:     "client", // default role
+		Role:     "client", 
 	}
 
 	if err := s.userRepo.Create(user); err != nil {
@@ -57,16 +58,15 @@ func (s *AuthService) Login(email, password string) (*entities.User, string, []s
     var errs []string
     user, err := s.userRepo.FindEmail(email)
     if err != nil || user == nil {
-        errs = append(errs, "Email not found")
-        // Không được truy cập user.Password nếu user == nil
+        errs = append(errs, "email not found")
         if password == "" || len(password) < 6 {
-            errs = append(errs, "Password must be at least 6 characters long")
+            errs = append(errs, "password must be at least 6 characters long")
         }else if !isValidEmail(email) { 
 			errs = append(errs, "Email format is invalid")
 		}
         return nil, "", errs
     }
-    if !utils.CheckPasswordHash(password, user.Password) {
+    if !helper.CheckPasswordHash(password, user.Password) {
         errs = append(errs, "Password is incorrect")
     }
     if len(errs) > 0 {
@@ -86,36 +86,36 @@ func isValidEmail(email string) bool {
     return re.MatchString(email)
 }
 
-func (s *AuthService) ForgotPassword(email string) error {
-	user, err := s.userRepo.FindEmail(email)
-    if err != nil || user == nil {
-        return nil
-    }
+// func (s *AuthService) ForgotPassword(email string) error {
+// 	user, err := s.userRepo.FindEmail(email)
+//     if err != nil || user == nil {
+//         return nil
+//     }
 
-    token, err := utils.GenerateResetToken(uint(user.ID), 15*time.Minute)
-    if err != nil {
-        return err
-    }
+//     token, err := utils.GenerateResetToken(uint(user.ID), 15*time.Minute)
+//     if err != nil {
+//         return err
+//     }
 
-    resetLink := fmt.Sprintf("https://yourdomain.com/reset-password?token=%s", token)
-    return helper.SendResetEmail(email, resetLink)
-}
+//     resetLink := fmt.Sprintf("https://yourdomain.com/reset-password?token=%s", token)
+//     return helper.SendResetEmail(email, resetLink)
+// }
 
-func (s *AuthService) ResetPassword(token, newPassword string) error {
-	userID, err := utils.ValidateResetToken(token)
-	if err != nil {
-		return errors.New("invalid or expired token")
-	}
+// func (s *AuthService) ResetPassword(token, newPassword string) error {
+// 	userID, err := utils.ValidateResetToken(token)
+// 	if err != nil {
+// 		return errors.New("invalid or expired token")
+// 	}
 
-	user, err := s.userRepo.FindByID(userID)
-	if err != nil || user == nil {
-		return errors.New("user not found")
-	}
+// 	user, err := s.userRepo.FindByID(userID)
+// 	if err != nil || user == nil {
+// 		return errors.New("user not found")
+// 	}
 
-	hashed, err := utils.HashPassword(newPassword)
-	if err != nil {
-		return err
-	}
-	user.Password = hashed
-	return s.userRepo.Update(user)
-}
+// 	hashed, err := utils.HashPassword(newPassword)
+// 	if err != nil {
+// 		return err
+// 	}
+// 	user.Password = hashed
+// 	return s.userRepo.Update(user)
+// }

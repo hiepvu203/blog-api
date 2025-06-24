@@ -2,8 +2,6 @@ package repositories
 
 import (
 	"blog-api/internal/entities"
-	// "fmt"
-
 	"gorm.io/gorm"
 )
 
@@ -81,6 +79,4 @@ func (r *PostRepository) ListPosts(title, content, category, author, status stri
 
     err := query.Limit(pageSize).Offset(offset).Order("created_at desc").Find(&posts).Error
     return posts, total, err
-	
-	// return nil, 0, fmt.Errorf("simulate db error") // test case error
 }

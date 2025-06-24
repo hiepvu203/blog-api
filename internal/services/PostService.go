@@ -34,24 +34,22 @@ func (s *PostService) ValidatePostCreation(req *dto.CreatePostRequest) ([]utils.
 		return nil, err // Internal server error
 	}
 	if existsSlug {
-		errs = append(errs, utils.FieldError{Field: "slug", Message: "Slug already exists"})
+		errs = append(errs, utils.FieldError{Field: "slug", Message: "slug already exists"})
 	}
 
 	return errs, nil
 }
 
 func (s *PostService) CreatePost(req *dto.CreatePostRequest, authorID uint) error {
-    // 1. Lấy thông tin user
     user, err := s.userRepo.FindByID(authorID)
     if err != nil {
         return errors.New("user not found")
     }
-    // 2. Kiểm tra quyền đăng bài
+
     if !user.CanPost {
-        return errors.New("Bạn đã bị chặn quyền đăng bài")
+        return errors.New("bạn đã bị chặn quyền đăng bài")
     }
 
-    // 3. Tạo post như cũ nếu user được phép
     post := &entities.Post{
         Title:      req.Title,
         Slug:       req.Slug,

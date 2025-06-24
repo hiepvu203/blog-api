@@ -2,7 +2,6 @@ package repositories
 
 import (
 	"blog-api/internal/entities"
-
 	"gorm.io/gorm"
 )
 
@@ -46,7 +45,6 @@ func (r *CommentRepository) ListByPostID(postID uint, page, pageSize int) ([]ent
         pageSize = 10
     }
     offset := (page - 1) * pageSize
-
     err := query.Order("created_at asc").Limit(pageSize).Offset(offset).Find(&comments).Error
     return comments, total, err
 }

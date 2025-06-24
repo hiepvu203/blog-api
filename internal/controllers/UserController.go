@@ -205,7 +205,6 @@ func (c *UserController) GetUserDetail(ctx *gin.Context) {
         return
     }
 
-    // Count posts and comments user's
     postCount := len(user.Posts)
     commentCount := len(user.Comments)
 
@@ -233,35 +232,35 @@ func (c *UserController) DeleteMe(ctx *gin.Context) {
     ctx.JSON(http.StatusOK, utils.SuccessResponse(gin.H{"message": utils.MsgUserDeleted}))
 }
 
-func (c *UserController) ForgotPassword(ctx *gin.Context) {
-	var req dto.ForgotPasswordRequest
-	if validationErrs := utils.BindAndValidate(ctx, &req); len(validationErrs) > 0 {
-		ctx.JSON(http.StatusBadRequest, gin.H{"success": false, "errors": validationErrs})
-		return
-	}
+// func (c *UserController) ForgotPassword(ctx *gin.Context) {
+// 	var req dto.ForgotPasswordRequest
+// 	if validationErrs := utils.BindAndValidate(ctx, &req); len(validationErrs) > 0 {
+// 		ctx.JSON(http.StatusBadRequest, gin.H{"success": false, "errors": validationErrs})
+// 		return
+// 	}
 
-	err := c.authService.ForgotPassword(req.Email)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, utils.ErrorResponse("email", err.Error()))
-		return
-	}
-}
+// 	err := c.authService.ForgotPassword(req.Email)
+// 	if err != nil {
+// 		ctx.JSON(http.StatusInternalServerError, utils.ErrorResponse("email", err.Error()))
+// 		return
+// 	}
+// }
 
-func (c *UserController) ResetPassword(ctx *gin.Context) {
-	var req dto.ResetPasswordRequest
-	if validationErrs := utils.BindAndValidate(ctx, &req); len(validationErrs) > 0 {
-		ctx.JSON(http.StatusBadRequest, gin.H{"success": false, "errors": validationErrs})
-		return
-	}
+// func (c *UserController) ResetPassword(ctx *gin.Context) {
+// 	var req dto.ResetPasswordRequest
+// 	if validationErrs := utils.BindAndValidate(ctx, &req); len(validationErrs) > 0 {
+// 		ctx.JSON(http.StatusBadRequest, gin.H{"success": false, "errors": validationErrs})
+// 		return
+// 	}
 
-	err := c.authService.ResetPassword(req.Token, req.NewPassword)
-	if err != nil {
-		ctx.JSON(http.StatusBadRequest, utils.ErrorResponse("reset_password", err.Error()))
-		return
-	}
+// 	err := c.authService.ResetPassword(req.Token, req.NewPassword)
+// 	if err != nil {
+// 		ctx.JSON(http.StatusBadRequest, utils.ErrorResponse("reset_password", err.Error()))
+// 		return
+// 	}
 
-	ctx.JSON(http.StatusOK, utils.SuccessResponse(gin.H{"message": "Password reset successful"}))
-}
+// 	ctx.JSON(http.StatusOK, utils.SuccessResponse(gin.H{"message": "password reset successful"}))
+// }
 
 func (c *UserController) UpdateCanPost(ctx *gin.Context) {
     userID, ok := utils.GetUintIDParam(ctx, "id", utils.ErrInvalidUserID)
@@ -278,5 +277,5 @@ func (c *UserController) UpdateCanPost(ctx *gin.Context) {
         ctx.JSON(http.StatusInternalServerError, utils.ErrorResponse("user", err.Error()))
         return
     }
-    ctx.JSON(http.StatusOK, utils.SuccessResponse(gin.H{"message": "Cập nhật quyền đăng bài thành công"}))
+    ctx.JSON(http.StatusOK, utils.SuccessResponse(gin.H{"message": "cập nhật quyền đăng bài thành công"}))
 }

@@ -3,7 +3,6 @@ package repositories
 import (
 	"blog-api/internal/entities"
 	"errors"
-
 	"gorm.io/gorm"
 )
 
@@ -79,7 +78,7 @@ func (r *UserRepository) Update(user  *entities.User) error {
 	return r.db.Model(&entities.User{}).Where("id = ?", user.ID).Updates(map[string]interface{}{
         "username":  user.Username,
         "email":     user.Email,
-        "password":  user.Password, // hashed from services
+        "password":  user.Password, 
 		"role":      user.Role,
     }).Error
 }

@@ -3,7 +3,7 @@ package services
 import (
 	"blog-api/internal/entities"
 	"blog-api/internal/repositories"
-	"blog-api/pkg/utils"
+	"blog-api/pkg/helper"
 	"errors"
 )
 
@@ -32,10 +32,10 @@ func (s *UserService) ChangePassword(userID uint, oldPassword, newPassword strin
     if err != nil {
         return err
     }
-    if !utils.CheckPasswordHash(oldPassword, user.Password) {
+    if !helper.CheckPasswordHash(oldPassword, user.Password) {
         return errors.New("old password is incorrect")
     }
-    hashed, err := utils.HashPassword(newPassword)
+    hashed, err := helper.HashPassword(newPassword)
     if err != nil {
         return err
     }
