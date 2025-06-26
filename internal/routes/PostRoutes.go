@@ -25,6 +25,7 @@ func SetupPostRoutes(r *gin.Engine, db *gorm.DB) {
 
     adminGroup := r.Group("/admin/posts").Use(middlewares.AuthMiddleware(), middlewares.AdminMiddleware())
     {
+		adminGroup.GET("", controller.GetAllPosts)
         adminGroup.DELETE("/:id", controller.DeletePost) 
     }
 

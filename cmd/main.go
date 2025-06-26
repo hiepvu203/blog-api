@@ -1,3 +1,12 @@
+// @title Blog API
+// @version 1.0
+// @description API cho blog project
+// @host localhost:9090
+// @BasePath /
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
+
 package main
 
 import (
@@ -11,6 +20,9 @@ import (
 	"github.com/gin-gonic/gin/binding"
 	"github.com/go-playground/validator/v10"
 	"github.com/joho/godotenv"
+	_ "blog-api/docs"
+	"github.com/swaggo/gin-swagger"
+    "github.com/swaggo/files"
 )
 
 func init() {
@@ -35,7 +47,7 @@ func UsernameValidator(fl validator.FieldLevel) bool {
 
 func StrongPasswordValidator(fl validator.FieldLevel) bool {
 	value := fl.Field().String()
-	if len(value) < 8 {
+	if len(value) < 6 {
 		return false
 	}
 	hasLower := regexp.MustCompile(`[a-z]`).MatchString(value)
@@ -51,6 +63,7 @@ func main(){
 	config.InitDB()
 
 	r := gin.Default()
+	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 	// r.Use(cors.Default())
 	r.Use(cors.New(cors.Config{
         AllowOrigins:     []string{"http://localhost:4200"},

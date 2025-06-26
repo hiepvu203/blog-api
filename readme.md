@@ -88,7 +88,6 @@ A RESTful API for a blogging platform built with Golang and Gin. This project pr
 
 ## API Documentation
 
-- **Markdown:** See [`doc/blog-api-doc.md`](doc/blog-api-doc.md)
 - **Postman Collection:** Import [`doc/blog-api-doc.json`](doc/blog-api-doc.json) into Postman
 
 ### Example Endpoints

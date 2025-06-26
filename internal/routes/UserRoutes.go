@@ -26,7 +26,7 @@ func SetupUserRoutes(r *gin.Engine, db *gorm.DB) {
 	authGroup := r.Group("/users").Use(middlewares.AuthMiddleware())
 	{
 		authGroup.GET("/me", UserController.GetMe)
-		authGroup.POST("/change-password", UserController.ChangePassword)
+		authGroup.PUT("/change-password", UserController.ChangePassword)
 		authGroup.DELETE("/me", UserController.DeleteMe)
 	}
 

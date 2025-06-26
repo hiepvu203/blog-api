@@ -17,6 +17,18 @@ func NewPostController(service *services.PostService) *PostController {
 	return &PostController{service: service}
 }
 
+// CreatePost godoc
+// @Summary Tạo bài viết mới
+// @Description Tạo một bài viết mới, yêu cầu đăng nhập
+// @Tags posts
+// @Security BearerAuth
+// @Accept  json
+// @Produce  json
+// @Param   post  body  dto.CreatePostRequest  true  "Thông tin bài viết"
+// @Success 201 {object} utils.APIResponse "Tạo bài viết thành công"
+// @Failure 400 {object} utils.APIResponse "Lỗi xác thực hoặc dữ liệu không hợp lệ"
+// @Failure 500 {object} utils.APIResponse "Lỗi server"
+// @Router /posts [post]
 func (c *PostController) CreatePost(ctx *gin.Context) {
 	var req dto.CreatePostRequest
 	
@@ -63,6 +75,18 @@ func (c *PostController) CreatePost(ctx *gin.Context) {
 	utils.SendSuccess(ctx, http.StatusCreated, "201", utils.MsgPostCreated, nil)
 }
 
+// UpdatePost godoc
+// @Summary Cập nhật bài viết
+// @Description Cập nhật bài viết, chỉ chủ sở hữu hoặc admin mới được phép
+// @Tags posts
+// @Security BearerAuth
+// @Accept  json
+// @Produce  json
+// @Param   id    path  int  true  "ID bài viết"
+// @Param   post  body  dto.UpdatePostRequest  true  "Thông tin cập nhật bài viết"
+// @Success 200 {object} utils.APIResponse "Cập nhật thành công"
+// @Failure 400 {object} utils.APIResponse "Lỗi xác thực hoặc không tìm thấy bài viết"
+// @Router /posts/{id} [put]
 func (c *PostController) UpdatePost(ctx *gin.Context) {
 	id, ok := utils.GetUintIDParam(ctx, "id", utils.ErrInvalidPostID)
 	if !ok {
@@ -82,6 +106,16 @@ func (c *PostController) UpdatePost(ctx *gin.Context) {
 	utils.SendSuccess(ctx, http.StatusOK, "200", utils.MsgPostUpdated, nil)
 }
 
+// DeletePost godoc
+// @Summary Xóa bài viết
+// @Description Xóa bài viết, chỉ chủ sở hữu hoặc admin mới được phép
+// @Tags posts
+// @Security BearerAuth
+// @Produce  json
+// @Param   id  path  int  true  "ID bài viết"
+// @Success 200 {object} utils.APIResponse "Xóa thành công"
+// @Failure 404 {object} utils.APIResponse "Không tìm thấy bài viết"
+// @Router /posts/{id} [delete]
 func (c *PostController) DeletePost(ctx *gin.Context) {
 	id, ok := utils.GetUintIDParam(ctx, "id", utils.ErrInvalidPostID)
 	if !ok {
@@ -95,6 +129,20 @@ func (c *PostController) DeletePost(ctx *gin.Context) {
 	utils.SendSuccess(ctx, http.StatusOK, "200", utils.MsgPostDeleted, nil)
 }
 
+// GetAllPosts godoc
+// @Summary Lấy danh sách bài viết
+// @Description Lấy danh sách bài viết, có thể lọc theo tiêu đề, nội dung, danh mục, tác giả, phân trang
+// @Tags posts
+// @Produce  json
+// @Param   title     query  string  false  "Lọc theo tiêu đề"
+// @Param   content   query  string  false  "Lọc theo nội dung"
+// @Param   category  query  string  false  "Lọc theo danh mục"
+// @Param   author    query  string  false  "Lọc theo tác giả"
+// @Param   page      query  int     false  "Trang hiện tại"
+// @Param   page_size query  int     false  "Số lượng mỗi trang"
+// @Success 200 {object} utils.APIResponse "Danh sách bài viết và meta"
+// @Failure 500 {object} utils.APIResponse "Lỗi server"
+// @Router /posts [get]
 func (c *PostController) GetAllPosts(ctx *gin.Context) {
 	title := ctx.Query("title")
 	content := ctx.Query("content")
@@ -121,6 +169,15 @@ func (c *PostController) GetAllPosts(ctx *gin.Context) {
 	utils.SendSuccess(ctx, http.StatusOK, "200", utils.SearchSuccess, data)
 }
 
+// GetPostDetail godoc
+// @Summary Lấy chi tiết bài viết
+// @Description Lấy chi tiết một bài viết theo ID
+// @Tags posts
+// @Produce  json
+// @Param   post_id  path  int  true  "ID bài viết"
+// @Success 200 {object} utils.APIResponse "Chi tiết bài viết"
+// @Failure 404 {object} utils.APIResponse "Không tìm thấy bài viết"
+// @Router /posts/{post_id} [get]
 func (c *PostController) GetPostDetail(ctx *gin.Context) {
 	id, ok := utils.GetUintIDParam(ctx, "post_id", utils.ErrInvalidPostID)
 	if !ok {

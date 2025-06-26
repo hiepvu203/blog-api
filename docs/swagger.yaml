@@ -1,0 +1,869 @@
+basePath: /
+definitions:
+  dto.ChangePasswordRequest:
+    properties:
+      new_password:
+        type: string
+      old_password:
+        type: string
+    required:
+    - new_password
+    - old_password
+    type: object
+  dto.ChangeUserRole:
+    properties:
+      role:
+        enum:
+        - admin
+        - client
+        type: string
+    required:
+    - role
+    type: object
+  dto.CreateCategoryRequest:
+    properties:
+      name:
+        maxLength: 100
+        minLength: 2
+        type: string
+      slug:
+        maxLength: 50
+        minLength: 3
+        type: string
+    required:
+    - name
+    - slug
+    type: object
+  dto.CreateCommentRequest:
+    properties:
+      content:
+        type: string
+      post_id:
+        type: integer
+    required:
+    - content
+    - post_id
+    type: object
+  dto.CreatePostRequest:
+    properties:
+      category_id:
+        type: integer
+      content:
+        type: string
+      slug:
+        type: string
+      status:
+        enum:
+        - draft
+        - published
+        type: string
+      thumbnail:
+        type: string
+      title:
+        maxLength: 200
+        minLength: 2
+        type: string
+    required:
+    - category_id
+    - content
+    - slug
+    - status
+    - thumbnail
+    - title
+    type: object
+  dto.UpdateCanPostRequest:
+    properties:
+      can_post:
+        type: boolean
+    required:
+    - can_post
+    type: object
+  dto.UpdateCategoryRequest:
+    properties:
+      name:
+        maxLength: 100
+        minLength: 2
+        type: string
+      slug:
+        maxLength: 50
+        minLength: 3
+        type: string
+    required:
+    - name
+    - slug
+    type: object
+  dto.UpdateCommentRequest:
+    properties:
+      content:
+        type: string
+    required:
+    - content
+    type: object
+  dto.UpdatePostRequest:
+    properties:
+      category_id:
+        type: integer
+      content:
+        type: string
+      slug:
+        type: string
+      status:
+        enum:
+        - draft
+        - published
+        type: string
+      thumbnail:
+        type: string
+      title:
+        maxLength: 200
+        minLength: 2
+        type: string
+    required:
+    - category_id
+    - content
+    - slug
+    - title
+    type: object
+  dto.UserLoginRequest:
+    properties:
+      email:
+        type: string
+      password:
+        minLength: 6
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  dto.UserRegisterRequest:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+      username:
+        maxLength: 20
+        minLength: 3
+        type: string
+    required:
+    - email
+    - password
+    - username
+    type: object
+  utils.APIResponse:
+    properties:
+      code:
+        type: string
+      data: {}
+      message:
+        type: string
+      status:
+        type: string
+    type: object
+host: localhost:9090
+info:
+  contact: {}
+  description: API cho blog project
+  title: Blog API
+  version: "1.0"
+paths:
+  /admin/categories:
+    get:
+      description: Lấy danh sách danh mục, kèm số lượng và danh sách bài viết trong
+        từng danh mục (chỉ admin)
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Danh sách danh mục cho admin
+          schema:
+            $ref: '#/definitions/utils.APIResponse'
+        "500":
+          description: Lỗi server
+          schema:
+            $ref: '#/definitions/utils.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách danh mục (admin)
+      tags:
+      - categories
+    post:
+      consumes:
+      - application/json
+      description: Tạo một danh mục mới (chỉ admin)
+      parameters:
+      - description: Thông tin danh mục
+        in: body
+        name: category
+        required: true
+        schema:
+          $ref: '#/definitions/dto.CreateCategoryRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Tạo danh mục thành công
+          schema:
+            $ref: '#/definitions/utils.APIResponse'
+        "400":
+          description: Lỗi xác thực hoặc tạo danh mục
+          schema:
+            $ref: '#/definitions/utils.APIResponse'
+        "500":
+          description: Lỗi server
+          schema:
+            $ref: '#/definitions/utils.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Tạo danh mục mới
+      tags:
+      - categories
+  /admin/categories/{id}:
+    delete:
+      description: Xóa danh mục theo ID (chỉ admin)
+      parameters:
+      - description: ID danh mục
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Xóa thành công
+          schema:
+            $ref: '#/definitions/utils.APIResponse'
+        "404":
+          description: Không tìm thấy danh mục
+          schema:
+            $ref: '#/definitions/utils.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Xóa danh mục
+      tags:
+      - categories
+    put:
+      consumes:
+      - application/json
+      description: Cập nhật thông tin danh mục (chỉ admin)
+      parameters:
+      - description: ID danh mục
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Thông tin cập nhật danh mục
+        in: body
+        name: category
+        required: true
+        schema:
+          $ref: '#/definitions/dto.UpdateCategoryRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Cập nhật thành công
+          schema:
+            $ref: '#/definitions/utils.APIResponse'
+        "400":
+          description: Lỗi xác thực
+          schema:
+            $ref: '#/definitions/utils.APIResponse'
+        "404":
+          description: Không tìm thấy danh mục
+          schema:
+            $ref: '#/definitions/utils.APIResponse'
+        "500":
+          description: Lỗi server
+          schema:
+            $ref: '#/definitions/utils.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Cập nhật danh mục
+      tags:
+      - categories
+  /admin/users:
+    get:
+      description: Lấy danh sách user, có phân trang
+      parameters:
+      - description: Trang hiện tại
+        in: query
+        name: page
+        type: integer
+      - description: Số lượng mỗi trang
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Danh sách user và meta
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Lỗi server
+          schema:
+            $ref: '#/definitions/utils.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách người dùng
+      tags:
+      - users
+  /admin/users/{id}:
+    delete:
+      description: Xóa user theo id
+      parameters:
+      - description: ID người dùng
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Xóa thành công
+          schema:
+            $ref: '#/definitions/utils.APIResponse'
+        "404":
+          description: Không tìm thấy user
+          schema:
+            $ref: '#/definitions/utils.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Xóa người dùng
+      tags:
+      - users
+    get:
+      description: Lấy thông tin user theo id
+      parameters:
+      - description: ID người dùng
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Thông tin user
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Không tìm thấy user
+          schema:
+            $ref: '#/definitions/utils.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Lấy chi tiết người dùng
+      tags:
+      - users
+  /admin/users/{id}/ban-post:
+    put:
+      consumes:
+      - application/json
+      description: Cập nhật quyền đăng bài cho user theo id
+      parameters:
+      - description: ID người dùng
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Trạng thái quyền đăng bài
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/dto.UpdateCanPostRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Cập nhật thành công
+          schema:
+            $ref: '#/definitions/utils.APIResponse'
+        "400":
+          description: Lỗi xác thực
+          schema:
+            $ref: '#/definitions/utils.APIResponse'
+        "500":
+          description: Lỗi server
+          schema:
+            $ref: '#/definitions/utils.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Cập nhật quyền đăng bài
+      tags:
+      - users
+  /admin/users/{id}/role:
+    put:
+      consumes:
+      - application/json
+      description: Đổi role cho user theo id
+      parameters:
+      - description: ID người dùng
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Thông tin role mới
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/dto.ChangeUserRole'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Cập nhật role thành công
+          schema:
+            $ref: '#/definitions/utils.APIResponse'
+        "400":
+          description: Lỗi xác thực hoặc không tìm thấy user
+          schema:
+            $ref: '#/definitions/utils.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Đổi vai trò người dùng
+      tags:
+      - users
+  /categories:
+    get:
+      description: Lấy danh sách tất cả danh mục (public)
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Danh sách danh mục
+          schema:
+            $ref: '#/definitions/utils.APIResponse'
+        "500":
+          description: Lỗi server
+          schema:
+            $ref: '#/definitions/utils.APIResponse'
+      summary: Lấy danh sách danh mục
+      tags:
+      - categories
+  /comments/{comment_id}:
+    delete:
+      description: Xóa bình luận (yêu cầu đăng nhập, chỉ chủ sở hữu bình luận hoặc
+        chủ bài viết mới được xóa)
+      parameters:
+      - description: ID bình luận
+        in: path
+        name: comment_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Xóa thành công
+          schema:
+            $ref: '#/definitions/utils.APIResponse'
+        "404":
+          description: Không tìm thấy bình luận
+          schema:
+            $ref: '#/definitions/utils.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Xóa bình luận
+      tags:
+      - comments
+    put:
+      consumes:
+      - application/json
+      description: Cập nhật nội dung bình luận (yêu cầu đăng nhập, chỉ chủ sở hữu
+        mới được sửa)
+      parameters:
+      - description: ID bình luận
+        in: path
+        name: comment_id
+        required: true
+        type: integer
+      - description: Nội dung cập nhật
+        in: body
+        name: comment
+        required: true
+        schema:
+          $ref: '#/definitions/dto.UpdateCommentRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Cập nhật thành công
+          schema:
+            $ref: '#/definitions/utils.APIResponse'
+        "400":
+          description: Lỗi xác thực
+          schema:
+            $ref: '#/definitions/utils.APIResponse'
+        "404":
+          description: Không tìm thấy bình luận
+          schema:
+            $ref: '#/definitions/utils.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Cập nhật bình luận
+      tags:
+      - comments
+  /posts:
+    get:
+      description: Lấy danh sách bài viết, có thể lọc theo tiêu đề, nội dung, danh
+        mục, tác giả, phân trang
+      parameters:
+      - description: Lọc theo tiêu đề
+        in: query
+        name: title
+        type: string
+      - description: Lọc theo nội dung
+        in: query
+        name: content
+        type: string
+      - description: Lọc theo danh mục
+        in: query
+        name: category
+        type: string
+      - description: Lọc theo tác giả
+        in: query
+        name: author
+        type: string
+      - description: Trang hiện tại
+        in: query
+        name: page
+        type: integer
+      - description: Số lượng mỗi trang
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Danh sách bài viết và meta
+          schema:
+            $ref: '#/definitions/utils.APIResponse'
+        "500":
+          description: Lỗi server
+          schema:
+            $ref: '#/definitions/utils.APIResponse'
+      summary: Lấy danh sách bài viết
+      tags:
+      - posts
+    post:
+      consumes:
+      - application/json
+      description: Tạo một bài viết mới, yêu cầu đăng nhập
+      parameters:
+      - description: Thông tin bài viết
+        in: body
+        name: post
+        required: true
+        schema:
+          $ref: '#/definitions/dto.CreatePostRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Tạo bài viết thành công
+          schema:
+            $ref: '#/definitions/utils.APIResponse'
+        "400":
+          description: Lỗi xác thực hoặc dữ liệu không hợp lệ
+          schema:
+            $ref: '#/definitions/utils.APIResponse'
+        "500":
+          description: Lỗi server
+          schema:
+            $ref: '#/definitions/utils.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Tạo bài viết mới
+      tags:
+      - posts
+  /posts/{id}:
+    delete:
+      description: Xóa bài viết, chỉ chủ sở hữu hoặc admin mới được phép
+      parameters:
+      - description: ID bài viết
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Xóa thành công
+          schema:
+            $ref: '#/definitions/utils.APIResponse'
+        "404":
+          description: Không tìm thấy bài viết
+          schema:
+            $ref: '#/definitions/utils.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Xóa bài viết
+      tags:
+      - posts
+    put:
+      consumes:
+      - application/json
+      description: Cập nhật bài viết, chỉ chủ sở hữu hoặc admin mới được phép
+      parameters:
+      - description: ID bài viết
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Thông tin cập nhật bài viết
+        in: body
+        name: post
+        required: true
+        schema:
+          $ref: '#/definitions/dto.UpdatePostRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Cập nhật thành công
+          schema:
+            $ref: '#/definitions/utils.APIResponse'
+        "400":
+          description: Lỗi xác thực hoặc không tìm thấy bài viết
+          schema:
+            $ref: '#/definitions/utils.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Cập nhật bài viết
+      tags:
+      - posts
+  /posts/{post_id}:
+    get:
+      description: Lấy chi tiết một bài viết theo ID
+      parameters:
+      - description: ID bài viết
+        in: path
+        name: post_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Chi tiết bài viết
+          schema:
+            $ref: '#/definitions/utils.APIResponse'
+        "404":
+          description: Không tìm thấy bài viết
+          schema:
+            $ref: '#/definitions/utils.APIResponse'
+      summary: Lấy chi tiết bài viết
+      tags:
+      - posts
+  /posts/{post_id}/comments:
+    get:
+      description: Lấy danh sách bình luận theo bài viết, có phân trang
+      parameters:
+      - description: ID bài viết
+        in: path
+        name: post_id
+        required: true
+        type: integer
+      - description: Trang hiện tại
+        in: query
+        name: page
+        type: integer
+      - description: Số lượng mỗi trang
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Danh sách bình luận
+          schema:
+            $ref: '#/definitions/utils.APIResponse'
+        "500":
+          description: Lỗi server
+          schema:
+            $ref: '#/definitions/utils.APIResponse'
+      summary: Lấy danh sách bình luận của bài viết
+      tags:
+      - comments
+    post:
+      consumes:
+      - application/json
+      description: Tạo bình luận cho một bài viết (yêu cầu đăng nhập)
+      parameters:
+      - description: ID bài viết
+        in: path
+        name: post_id
+        required: true
+        type: integer
+      - description: Nội dung bình luận
+        in: body
+        name: comment
+        required: true
+        schema:
+          $ref: '#/definitions/dto.CreateCommentRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Tạo bình luận thành công
+          schema:
+            $ref: '#/definitions/utils.APIResponse'
+        "400":
+          description: Lỗi xác thực hoặc dữ liệu không hợp lệ
+          schema:
+            $ref: '#/definitions/utils.APIResponse'
+        "500":
+          description: Lỗi server
+          schema:
+            $ref: '#/definitions/utils.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Tạo bình luận mới
+      tags:
+      - comments
+  /users/change-password:
+    put:
+      consumes:
+      - application/json
+      description: Đổi mật khẩu cho user hiện tại
+      parameters:
+      - description: Thông tin đổi mật khẩu
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/dto.ChangePasswordRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Đổi mật khẩu thành công
+          schema:
+            $ref: '#/definitions/utils.APIResponse'
+        "400":
+          description: Lỗi xác thực hoặc mật khẩu cũ sai
+          schema:
+            $ref: '#/definitions/utils.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Đổi mật khẩu
+      tags:
+      - users
+  /users/login:
+    post:
+      consumes:
+      - application/json
+      description: Đăng nhập với email và password
+      parameters:
+      - description: Thông tin đăng nhập
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/dto.UserLoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Đăng nhập thành công, trả về token và thông tin user
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Lỗi xác thực
+          schema:
+            $ref: '#/definitions/utils.APIResponse'
+        "401":
+          description: Sai thông tin đăng nhập
+          schema:
+            $ref: '#/definitions/utils.APIResponse'
+      summary: Đăng nhập
+      tags:
+      - users
+  /users/me:
+    delete:
+      description: Xóa user hiện tại (self-delete)
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Xóa thành công
+          schema:
+            $ref: '#/definitions/utils.APIResponse'
+        "404":
+          description: Không tìm thấy user
+          schema:
+            $ref: '#/definitions/utils.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Xóa tài khoản của chính mình
+      tags:
+      - users
+    get:
+      description: Lấy thông tin user từ token
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Thông tin user
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Không tìm thấy user
+          schema:
+            $ref: '#/definitions/utils.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Lấy thông tin người dùng hiện tại
+      tags:
+      - users
+  /users/register:
+    post:
+      consumes:
+      - application/json
+      description: Đăng ký tài khoản với email, password và username
+      parameters:
+      - description: Thông tin đăng ký
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/dto.UserRegisterRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Đăng ký thành công
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Lỗi xác thực hoặc đăng ký
+          schema:
+            $ref: '#/definitions/utils.APIResponse'
+        "409":
+          description: Email đã tồn tại
+          schema:
+            $ref: '#/definitions/utils.APIResponse'
+      summary: Đăng ký người dùng mới
+      tags:
+      - users
+securityDefinitions:
+  BearerAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"
