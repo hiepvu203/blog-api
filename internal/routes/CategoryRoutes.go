@@ -5,6 +5,7 @@ import (
 	"blog-api/internal/repositories"
 	"blog-api/internal/services"
 	"blog-api/pkg/middlewares"
+
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
@@ -23,7 +24,7 @@ func SetupCategoryRoutes(r *gin.Engine, db *gorm.DB) {
 	}
 
 	publicGroup := r.Group("/categories")
-    {
-        publicGroup.GET("", controller.ListCategories)
-    }
+	{
+		publicGroup.GET("", controller.ListCategories)
+	}
 }

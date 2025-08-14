@@ -20,6 +20,7 @@ func SetupPostRoutes(r *gin.Engine, db *gorm.DB) {
     {
         userGroup.POST("", controller.CreatePost)
         userGroup.PUT("/:id", middlewares.OwnerOrAdminMiddleware(db), controller.UpdatePost)
+        userGroup.PATCH("/:id", middlewares.OwnerOrAdminMiddleware(db), controller.UpdatePost)
         userGroup.DELETE("/:id", middlewares.OwnerOrAdminMiddleware(db), controller.DeletePost) 
     }
 

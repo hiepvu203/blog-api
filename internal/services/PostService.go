@@ -50,8 +50,22 @@ func (s *PostService) CreatePost(req *dto.CreatePostRequest, authorID uint) erro
 }
 
 func (s *PostService) UpdatePost(id uint, req *dto.UpdatePostRequest) error {
-    if req.CategoryID != 0 {
-        exists, err := s.categoryRepo.Exists(req.CategoryID)
+    updates := make(map[string]interface{})
+    if req.Title != nil {
+        updates["title"] = *req.Title
+    }
+    if req.Slug != nil {
+        updates["slug"] = *req.Slug
+    }
+    if req.Content != nil {
+        updates["content"] = *req.Content
+    }
+    if req.Thumbnail != nil {
+        updates["thumbnail"] = *req.Thumbnail
+    }
+    if req.CategoryID != nil {
+        updates["category_id"] = *req.CategoryID
+		exists, err := s.categoryRepo.Exists(*req.CategoryID)
         if err != nil {
             return err
         }
@@ -59,26 +73,15 @@ func (s *PostService) UpdatePost(id uint, req *dto.UpdatePostRequest) error {
             return errors.New("category does not exist")
         }
     }
-    updated := &entities.Post{}
-    if req.Title != "" {
-        updated.Title = req.Title
+    if req.Status != nil {
+        updates["status"] = *req.Status
     }
-    if req.Slug != "" {
-        updated.Slug = req.Slug
+
+    if len(updates) == 0 {
+        return errors.New("no fields to update")
     }
-    if req.Content != "" {
-        updated.Content = req.Content
-    }
-    if req.Thumbnail != "" {
-        updated.Thumbnail = req.Thumbnail
-    }
-    if req.CategoryID != 0 {
-        updated.CategoryID = req.CategoryID
-    }
-    if req.Status != "" {
-        updated.Status = req.Status
-    }
-    return s.repo.Update(id, updated)
+
+    return s.repo.Update(id, updates)
 }
 
 func (s *PostService) DeletePost(id uint) error {

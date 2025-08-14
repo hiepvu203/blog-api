@@ -12,12 +12,12 @@ type CreatePostRequest struct {
 }
 
 type UpdatePostRequest struct {
-	Title      string `json:"title,omitempty" binding:"required,min=2,max=200"`
-	Slug       string `json:"slug" binding:"required"`
-	Content    string `json:"content,omitempty" binding:"required"`
-	Thumbnail  string `json:"thumbnail,omitempty" binding:"omitempty,url"`
-	CategoryID uint   `json:"category_id,omitempty" binding:"required,number"`
-	Status     string `json:"status,omitempty" binding:"omitempty,oneof=draft published"`
+	Title      *string `json:"title,omitempty" binding:"omitempty,min=2,max=200"`
+	Slug       *string `json:"slug" binding:"omitempty"`
+	Content    *string `json:"content,omitempty" binding:"omitempty"`
+	Thumbnail  *string `json:"thumbnail,omitempty" binding:"omitempty,url"`
+	CategoryID *uint   `json:"category_id,omitempty" binding:"omitempty,number"`
+	Status     *string `json:"status,omitempty" binding:"omitempty,oneof=draft published"`
 }
 
 type PostResponse struct {

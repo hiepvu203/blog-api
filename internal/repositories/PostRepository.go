@@ -23,8 +23,8 @@ func (r *PostRepository) Create(post *entities.Post) error {
 	return r.db.Create(post).Error
 }
 
-func (r *PostRepository) Update(id uint, updated *entities.Post) error {
-    return r.db.Model(&entities.Post{}).Where("id = ?", id).Updates(updated).Error
+func (r *PostRepository) Update(id uint, updates map[string]interface{}) error {
+    return r.db.Model(&entities.Post{}).Where("id = ?", id).Updates(updates).Error
 }
 
 func (r *PostRepository) Delete(id uint) error {
@@ -56,7 +56,7 @@ func (r *PostRepository) ListPosts(title, content, category, author, status stri
         query = query.Where("content ILIKE ?", "%"+content+"%")
     }
     if category != "" {
-        query = query.Joins("JOIN categories ON categories.id = posts.category_id").Where("categories.slug ILIKE ?", "%"+category+"%")
+        query = query.Joins("JOIN categories ON categories.id = posts.category_id")  .Where("categories.name ILIKE ?", "%"+category+"%")
     }
     if author != "" {
         query = query.Joins("JOIN users ON users.id = posts.author_id").Where("users.username ILIKE ?", "%"+author+"%")
